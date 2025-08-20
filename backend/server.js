@@ -4,10 +4,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const authRoutes = require("./routes/authRoute");
-const questionRoutes = require("./routes/questionRoute");
-const setsRoutes = require("./routes/setsRoute");
-const certificateRoutes = require("./routes/certificateRoute");
+// Ensure these filenames match your files in ./routes/
+const authRoutes = require("./routes/authRoute"); // <-- filename: authRoutes.js
+const questionRoutes = require("./routes/questionRoute"); // <-- filename: questionRoute.js
+const setsRoutes = require("./routes/setsRoute"); // <-- filename: setsRoute.js
+const certificateRoutes = require("./routes/certificateRoute"); // <-- filename: certificateRoute.js
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,10 +29,15 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // Routes
-app.use("/api/users", authRoutes);
-app.use("/api/questions", questionRoutes);
-app.use("/api/sets", setsRoutes);
-app.use("/api/certificate", certificateRoutes);
+app.use("/api/users", authRoutes); // All user-related endpoints
+app.use("/api/questions", questionRoutes); // All question endpoints
+app.use("/api/sets", setsRoutes); // All quiz set endpoints
+app.use("/api/certificate", certificateRoutes); // All certificate endpoints
+
+// Generic 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: "Endpoint not found" });
+});
 
 // Start server
 app.listen(PORT, () => {
