@@ -7,7 +7,6 @@
     "mongoose": "^8.17.1",
     "nodemailer": "^7.0.5",
     "pdfkit": "^0.17.1",
-    "puppeteer": "^24.16.2",
     "quiz-app": "file:..",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
