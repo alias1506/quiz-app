@@ -65,16 +65,20 @@ function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/users/check-email",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: formData.email }),
-        }
-      );
+      const API_BASE_URL =
+        typeof import.meta !== "undefined" &&
+        import.meta.env &&
+        import.meta.env.MODE === "production"
+          ? ""
+          : "http://localhost:5000";
+
+      const response = await fetch(`${API_BASE_URL}/api/users/check-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: formData.email }),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -29,10 +29,14 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // Routes
-app.use("/api/users", authRoutes); // All user-related endpoints
-app.use("/api/questions", questionRoutes); // All question endpoints
-app.use("/api/sets", setsRoutes); // All quiz set endpoints
-app.use("/api/certificate", certificateRoutes); // All certificate endpoints
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static("../frontend/build"));
+}
+
+app.use("/api/users", authRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/sets", setsRoutes);
+app.use("/api/certificate", certificateRoutes);
 
 // Generic 404 handler
 app.use((req, res) => {
