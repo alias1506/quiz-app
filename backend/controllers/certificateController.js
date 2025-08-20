@@ -1,506 +1,269 @@
-// const nodemailer = require("nodemailer");
-// const puppeteer = require("puppeteer");
-
-// const sendCertificate = async (req, res) => {
-//   try {
-//     const { name, email, score, total, date, quizName } = req.body;
-
-//     const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
-
-//     const html = `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <meta charset="UTF-8" />
-//       <title>Certificate</title>
-//       <script src="https://cdn.tailwindcss.com"></script>
-//       <style>
-//         body { margin: 0; padding: 0; }
-//         .certificate {
-//           width: 1000px;
-//           height: 700px;
-//         }
-//       </style>
-//     </head>
-//     <body class="flex items-center justify-center bg-gray-50">
-//       <div class="certificate bg-white border-8 border-yellow-600 rounded-2xl shadow-2xl flex flex-col items-center justify-start p-10 font-serif mx-auto">
-
-//         <!-- Top Logos -->
-//         <div class="w-full flex justify-between items-center px-16">
-//           <img src="${frontendBaseURL}/club-logo.jpg" class="h-28 object-contain" />
-//           <img src="${frontendBaseURL}/college-logo.png" class="h-28 object-contain" />
-//         </div>
-
-//         <!-- Title -->
-//         <div class="mt-6 text-center">
-//           <h1 class="text-5xl font-bold text-yellow-700 uppercase">Certificate of Achievement</h1>
-//           <p class="text-lg text-gray-600 italic">Voices and Minds United</p>
-//         </div>
-
-//         <!-- Main Content -->
-//         <div class="text-center px-12 mt-6">
-//           <p class="text-2xl mb-4">This is proudly presented to</p>
-//           <h2 class="text-4xl font-bold text-gray-900 underline decoration-yellow-500 decoration-4 mb-6">
-//             ${name}
-//           </h2>
-//           <p class="text-xl text-gray-700 mb-4">For outstanding performance in the <b>Debate & Quiz Club</b></p>
-//           <p class="text-xl text-gray-700 mb-6">Score: <b>${score}</b> out of <b>${total}</b></p>
-//         </div>
-
-//         <!-- Footer -->
-//         <div class="flex justify-center w-full px-16 mt-12">
-//           <div class="text-center">
-//             <p class="text-lg font-semibold">Date</p>
-//             <p class="text-gray-700">${date}</p>
-//           </div>
-//         </div>
-//       </div>
-//     </body>
-//     </html>
-//     `;
-
-//     // ✅ Generate cropped certificate (no white space)
-//     const browser = await puppeteer.launch({
-//       // headless: "new",
-//       // args: ["--no-sandbox", "--disable-setuid-sandbox"],
-
-//     });
-//     const page = await browser.newPage();
-//     await page.setContent(html, { waitUntil: "networkidle0" });
-
-//     const element = await page.$(".certificate");
-//     const certificateImage = await element.screenshot({ type: "png" });
-//     await browser.close();
-
-//     // ✅ Send email with new message
-//     let transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//         user: "iiedebateandquizclub@gmail.com",
-//         pass: process.env.GMAIL_APP_PASSWORD,
-//       },
-//     });
-
-//     await transporter.sendMail({
-//       from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
-//       to: email,
-//       subject: "Your Certificate of Participation 🎓",
-//       text: `Hello ${name},\n\nThank you for taking part in our online quiz! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
-//       attachments: [{ filename: "certificate.png", content: certificateImage }],
-//     });
-
-//     res.json({ message: "Certificate sent successfully" });
-//   } catch (err) {
-//     console.error("❌ Error sending certificate:", err);
-//     res.status(500).json({ message: "Error sending certificate" });
-//   }
-// };
-
-// module.exports = { sendCertificate };
-
-// 2nd
-
-// const nodemailer = require("nodemailer");
-// const puppeteer = require("puppeteer");
-// const fs = require("fs");
-// let clubLogoBase64, collegeLogoBase64;
-
-// try {
-//   clubLogoBase64 = fs.readFileSync("./public/club-logo.jpg").toString("base64");
-//   collegeLogoBase64 = fs
-//     .readFileSync("./public/college-logo.png")
-//     .toString("base64");
-// } catch (e) {
-//   console.warn("Logo files not found; external URLs will be used.");
-// }
-
-// const sendCertificate = async (req, res) => {
-//   try {
-//     const { name, email, score, total, date } = req.body;
-//     const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
-
-//     const imgClub = clubLogoBase64
-//       ? `data:image/jpeg;base64,${clubLogoBase64}`
-//       : `${frontendBaseURL}/club-logo.jpg`;
-//     const imgCollege = collegeLogoBase64
-//       ? `data:image/png;base64,${collegeLogoBase64}`
-//       : `${frontendBaseURL}/college-logo.png`;
-
-//     const html = `
-//         <!DOCTYPE html>
-//         <html>
-//         <head>
-//           <meta charset="UTF-8" />
-//           <title>Certificate</title>
-//           <script src="https://cdn.tailwindcss.com"></script>
-//           <style>
-//             body { margin: 0; padding: 0; }
-//             .certificate {
-//               width: 1000px;
-//               height: 700px;
-//             }
-//           </style>
-//         </head>
-//         <body class="flex items-center justify-center bg-gray-50">
-//           <div class="certificate bg-white border-8 border-yellow-600 rounded-2xl shadow-2xl flex flex-col items-center justify-start p-10 font-serif mx-auto">
-
-//             <!-- Top Logos -->
-//             <div class="w-full flex justify-between items-center px-16">
-//               <img src="${frontendBaseURL}/club-logo.jpg" class="h-28 object-contain" />
-//               <img src="${frontendBaseURL}/college-logo.png" class="h-28 object-contain" />
-//             </div>
-
-//             <!-- Title -->
-//             <div class="mt-6 text-center">
-//               <h1 class="text-5xl font-bold text-yellow-700 uppercase">Certificate of Achievement</h1>
-//               <p class="text-lg text-gray-600 italic">Voices and Minds United</p>
-//             </div>
-
-//             <!-- Main Content -->
-//             <div class="text-center px-12 mt-6">
-//               <p class="text-2xl mb-4">This is proudly presented to</p>
-//               <h2 class="text-4xl font-bold text-gray-900 underline decoration-yellow-500 decoration-4 mb-6">
-//                 ${name}
-//               </h2>
-//               <p class="text-xl text-gray-700 mb-4">For outstanding performance in the <b>Debate & Quiz Club</b></p>
-//               <p class="text-xl text-gray-700 mb-6">Score: <b>${score}</b> out of <b>${total}</b></p>
-//             </div>
-
-//             <!-- Footer -->
-//             <div class="flex justify-center w-full px-16 mt-12">
-//               <div class="text-center">
-//                 <p class="text-lg font-semibold">Date</p>
-//                 <p class="text-gray-700">${date}</p>
-//               </div>
-//             </div>
-//           </div>
-//         </body>
-//         </html>
-//         `;
-
-//     const browser = await puppeteer.launch({
-//       headless: true,
-//       args: [
-//         "--no-sandbox",
-//         "--disable-setuid-sandbox",
-//         "--disable-dev-shm-usage",
-//         "--disable-gpu",
-//         "--no-zygote",
-//         "--single-process",
-//       ],
-//       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-//     });
-
-//     const page = await browser.newPage();
-//     page.setDefaultNavigationTimeout(30000);
-//     page.setDefaultTimeout(30000);
-
-//     page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-//     page.on("pageerror", (err) => console.error("PAGE ERROR:", err));
-//     page.on("requestfailed", (req) =>
-//       console.error("REQ FAILED:", req.url(), req.failure()?.errorText)
-//     );
-
-//     await page.setContent(html, {
-//       waitUntil: ["load", "domcontentloaded", "networkidle2"],
-//     });
-
-//     // Ensure logos loaded if using URLs
-//     const cert = await page.$(".certificate");
-//     if (!cert) throw new Error("Certificate container not found");
-//     const certificateImage = await cert.screenshot({ type: "png" });
-
-//     await browser.close();
-
-//     const transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//         user: "iiedebateandquizclub@gmail.com",
-//         pass: process.env.GMAIL_APP_PASSWORD,
-//       },
-//     });
-
-//     await transporter.verify();
-
-//     await transporter.sendMail({
-//       from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
-//       to: email,
-//       subject: "Your Certificate of Participation 🎓",
-//       text: `Hello ${name},\n\nThank you for taking part in our online quiz! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
-//       attachments: [{ filename: "certificate.png", content: certificateImage }],
-//     });
-
-//     res.json({ message: "Certificate sent successfully" });
-//   } catch (err) {
-//     console.error("❌ Error sending certificate:", err?.stack || err);
-//     res
-//       .status(500)
-//       .json({ message: "Error sending certificate", error: err?.message });
-//   }
-// };
-
-// module.exports = { sendCertificate };
-
-// server/certificate.js (or your controller file)
-const fs = require("fs");
-const path = require("path");
 const nodemailer = require("nodemailer");
-const puppeteer = require("puppeteer");
+const PDFDocument = require("pdfkit");
+const axios = require("axios");
 
-// Preload logos as base64 to avoid any network dependency
-let clubLogoBase64 = null;
-let collegeLogoBase64 = null;
-try {
-  const clubPath = path.resolve(__dirname, "./public/club-logo.jpg");
-  const collegePath = path.resolve(__dirname, "./public/college-logo.png");
-  clubLogoBase64 = fs.readFileSync(clubPath).toString("base64");
-  collegeLogoBase64 = fs.readFileSync(collegePath).toString("base64");
-  console.log("Logos loaded for certificate rendering.");
-} catch (e) {
-  console.warn(
-    "Logo files not found. Place club-logo.jpg and college-logo.png in ./public",
-    e?.message || e
-  );
-}
+const sendCertificate = async (req, res) => {
+  try {
+    const { name, email, score, total, date, quizName } = req.body;
 
-function buildHtml({ name, score, total, date }) {
-  const imgClub = clubLogoBase64
-    ? `data:image/jpeg;base64,${clubLogoBase64}`
-    : "";
-  const imgCollege = collegeLogoBase64
-    ? `data:image/png;base64,${collegeLogoBase64}`
-    : "";
+    const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8" />
-<title>Certificate</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root {
-    --bg: #f9fafb;
-    --paper: #ffffff;
-    --border: #ca8a04; /* yellow-600 */
-    --title: #a16207; /* amber-700 */
-    --text: #111827;  /* gray-900 */
-    --muted: #374151; /* gray-700 */
-    --muted2:#4b5563; /* gray-600 */
-    --shadow: rgba(0,0,0,0.25);
-    --accent: #eab308; /* amber-500 */
-  }
-  html, body { margin:0; padding:0; background:var(--bg); }
-  body { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
-  .certificate {
-    width: 1000px;
-    height: 700px;
-    background: var(--paper);
-    border: 8px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 25px 50px var(--shadow);
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px;
-    box-sizing: border-box;
-  }
-  .row {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 64px;
-    box-sizing: border-box;
-  }
-  .logo {
-    height: 112px;
-    width: auto;
-    object-fit: contain;
-    display: block;
-  }
-  .title {
-    margin-top: 24px;
-    text-align: center;
-  }
-  .title h1 {
-    font-size: 48px;
-    line-height: 1.1;
-    font-weight: 800;
-    color: var(--title);
-    text-transform: uppercase;
-    margin: 0;
-  }
-  .subtitle {
-    color: var(--muted2);
-    font-style: italic;
-    margin-top: 6px;
-    font-size: 18px;
-  }
-  .content {
-    text-align: center;
-    padding: 0 48px;
-    margin-top: 24px;
-  }
-  .label {
-    font-size: 20px;
-    margin-bottom: 12px;
-    color: var(--text);
-  }
-  .name {
-    font-size: 36px;
-    font-weight: 800;
-    color: var(--text);
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 4px;
-    margin: 12px 0 20px 0;
-  }
-  .muted {
-    color: var(--muted);
-    font-size: 18px;
-    margin: 6px 0;
-  }
-  .footer {
-    margin-top: auto;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 0 64px;
-    box-sizing: border-box;
-  }
-  .footer .block {
-    text-align: center;
-  }
-  .footer .label {
-    font-weight: 600;
-  }
-</style>
-</head>
-<body>
-  <div class="certificate">
-    <div class="row">
-      ${imgClub ? `<img src="${imgClub}" class="logo" alt="Club Logo" />` : `<div></div>`}
-      ${imgCollege ? `<img src="${imgCollege}" class="logo" alt="College Logo" />` : `<div></div>`}
-    </div>
+    // Keep your HTML (not rendered by PDFKit, but preserved as requested)
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Certificate</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <style>
+        body { margin: 0; padding: 0; }
+        .certificate {
+          width: 1000px;
+          height: 700px;
+        }
+      </style>
+    </head>
+    <body class="flex items-center justify-center bg-gray-50">
+      <div class="certificate bg-white border-8 border-yellow-600 rounded-2xl shadow-2xl flex flex-col items-center justify-start p-10 font-serif mx-auto">
 
-    <div class="title">
-      <h1>Certificate of Achievement</h1>
-      <p class="subtitle">Voices and Minds United</p>
-    </div>
+        <!-- Top Logos -->
+        <div class="w-full flex justify-between items-center px-16">
+          <img src="${frontendBaseURL}/club-logo.jpg" class="h-28 object-contain" />
+          <img src="${frontendBaseURL}/college-logo.png" class="h-28 object-contain" />
+        </div>
 
-    <div class="content">
-      <p class="label">This is proudly presented to</p>
-      <div class="name">${escapeHtml(name)}</div>
-      <p class="muted">For outstanding performance in the <b>Debate & Quiz Club</b></p>
-      <p class="muted">Score: <b>${escapeHtml(score)}</b> out of <b>${escapeHtml(total)}</b></p>
-    </div>
+        <!-- Title -->
+        <div class="mt-6 text-center">
+          <h1 class="text-5xl font-bold text-yellow-700 uppercase">Certificate of Achievement</h1>
+          <p class="text-lg text-gray-600 italic">Voices and Minds United</p>
+        </div>
 
-    <div class="footer">
-      <div class="block">
-        <p class="label">Date</p>
-        <p class="muted">${escapeHtml(date)}</p>
+        <!-- Main Content -->
+        <div class="text-center px-12 mt-6">
+          <p class="text-2xl mb-4">This is proudly presented to</p>
+          <h2 class="text-4xl font-bold text-gray-900 underline decoration-yellow-500 decoration-4 mb-6">
+            ${name}
+          </h2>
+          <p class="text-xl text-gray-700 mb-4">For outstanding performance in the <b>Debate & Quiz Club</b></p>
+          <p class="text-xl text-gray-700 mb-6">Score: <b>${score}</b> out of <b>${total}</b></p>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-center w-full px-16 mt-12">
+          <div class="text-center">
+            <p class="text-lg font-semibold">Date</p>
+            <p class="text-gray-700">${date}</p>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</body>
-</html>`;
-}
+    </body>
+    </html>
+    `;
 
-function escapeHtml(v) {
-  if (v === null || v === undefined) return "";
-  return String(v)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+    // Build a PDF that visually matches the Tailwind layout using PDFKit
+    // Page size chosen to closely match 1000x700 "canvas" in points (72 DPI). We’ll use a custom size.
+    const width = 1000;
+    const height = 700;
 
-async function renderCertificatePng(html) {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--no-zygote",
-      "--single-process"
-    ]
-    // executablePath: omit for puppeteer (bundled Chromium). If you use puppeteer-core, set executablePath.
-  });
+    const doc = new PDFDocument({
+      size: [width, height],
+      margins: { top: 0, left: 0, right: 0, bottom: 0 },
+    });
 
-  try {
-    const page = await browser.newPage();
-    page.setDefaultNavigationTimeout(30000);
-    page.setDefaultTimeout(30000);
+    const chunks = [];
+    doc.on("data", (d) => chunks.push(d));
+    const pdfDone = new Promise((resolve) => {
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+    });
 
-    // Diagnostics
-    page.on("console", msg => console.log("PAGE LOG:", msg.text()));
-    page.on("pageerror", err => console.error("PAGE ERROR:", err));
-    page.on("requestfailed", req =>
-      console.error("REQ FAILED:", req.url(), req.failure()?.errorText)
-    );
-    page.on("framenavigated", f => console.log("FRAME NAV:", f.url()));
+    // Background
+    doc.rect(0, 0, width, height).fill("#f9fafb"); // bg-gray-50
 
-    // Static content; no external requests. Use domcontentloaded only.
-    await page.setContent(html, { waitUntil: ["domcontentloaded"] });
-    const cert = await page.$(".certificate");
-    if (!cert) throw new Error("Certificate container not found");
+    // White certificate card with border-8 yellow-600 and rounded corners
+    const cardX = 0; // center by using page background already
+    const cardY = 0;
+    const cardW = width;
+    const cardH = height;
 
-    // Make sure element is fully laid out
-    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    // Outer rounded border
+    const radius = 24; // rounded-2xl approx
+    doc.save();
+    doc.lineWidth(16); // border-8 (approx 16px)
+    doc.strokeColor("#ca8a04"); // yellow-600
+    // Draw rounded rectangle border
+    roundedRect(doc, cardX + 16, cardY + 16, cardW - 32, cardH - 32, radius);
+    doc.stroke();
 
-    const pngBuffer = await cert.screenshot({ type: "png" });
-    return pngBuffer;
-  } finally {
-    await browser.close();
-  }
-}
+    // Inner white fill
+    doc.fillColor("#ffffff");
+    roundedRect(doc, cardX + 24, cardY + 24, cardW - 48, cardH - 48, radius);
+    doc.fill();
+    doc.restore();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "iiedebateandquizclub@gmail.com",
-    pass: process.env.GMAIL_APP_PASSWORD
-  }
-});
+    // Padding similar to p-10 (40px) inside inner card
+    const pad = 40;
+    const innerX = cardX + 24 + pad;
+    const innerY = cardY + 24 + pad;
+    const innerW = cardW - 48 - pad * 2;
+    const innerH = cardH - 48 - pad * 2;
 
-async function sendCertificate(req, res) {
-  try {
-    const { name, email, score, total, date } = req.body || {};
-    if (!name || !email || score === undefined || total === undefined || !date) {
-      return res.status(400).json({ message: "Missing required fields: name, email, score, total, date" });
+    // Top logos: left/right within inner area with px-16 (~64px side padding)
+    const logosPadX = 64;
+    const logosY = innerY;
+    const logosH = 112; // h-28 ~ 112px
+    const logosBoxW = innerW - logosPadX * 2;
+
+    // Fetch logos as buffers
+    const clubLogoUrl = `${frontendBaseURL}/club-logo.jpg`;
+    const collegeLogoUrl = `${frontendBaseURL}/college-logo.png`;
+
+    let clubLogoBuf = null;
+    let collegeLogoBuf = null;
+    try {
+      const [clubRes, collegeRes] = await Promise.all([
+        axios.get(clubLogoUrl, { responseType: "arraybuffer" }),
+        axios.get(collegeLogoUrl, { responseType: "arraybuffer" }),
+      ]);
+      clubLogoBuf = Buffer.from(clubRes.data);
+      collegeLogoBuf = Buffer.from(collegeRes.data);
+    } catch (e) {
+      // If logos fail to load, continue without them
+      clubLogoBuf = null;
+      collegeLogoBuf = null;
     }
 
-    // Verify SMTP first to fail fast if creds are wrong
-    await transporter.verify();
+    // Draw logos if available
+    const leftLogoW = 200;
+    const rightLogoW = 200;
+    const leftLogoX = innerX + logosPadX;
+    const rightLogoX = innerX + logosPadX + logosBoxW - rightLogoW;
+    if (clubLogoBuf) {
+      doc.image(clubLogoBuf, leftLogoX, logosY, {
+        fit: [leftLogoW, logosH],
+        align: "left",
+        valign: "center",
+      });
+    }
+    if (collegeLogoBuf) {
+      doc.image(collegeLogoBuf, rightLogoX, logosY, {
+        fit: [rightLogoW, logosH],
+        align: "right",
+        valign: "center",
+      });
+    }
 
-    const html = buildHtml({ name, score, total, date });
-    const png = await renderCertificatePng(html);
+    // Title block: mt-6 (~24px)
+    let cursorY = logosY + logosH + 24;
+
+    // "Certificate of Achievement"
+    doc.fillColor("#ca8a04"); // yellow-700 like tone (Tailwind yellow-700 is #a16207, but close to keep harmony)
+    // Better: exact yellow-700 = #a16207
+    doc.fillColor("#a16207");
+    doc.fontSize(48); // text-5xl approx
+    doc.font("Times-Bold"); // font-serif, bold
+    const title = "Certificate of Achievement";
+    centerText(doc, title, innerX, cursorY, innerW);
+    cursorY += 48 + 8;
+
+    // Subtitle italic
+    doc.fillColor("#4b5563"); // gray-600
+    doc.fontSize(18);
+    doc.font("Times-Italic");
+    centerText(doc, "Voices and Minds United", innerX, cursorY, innerW);
+    cursorY += 18 + 24;
+
+    // Main content
+    doc.fillColor("#111827"); // gray-900 for headings
+    doc.font("Times-Roman");
+    doc.fontSize(22); // text-2xl
+    centerText(doc, "This is proudly presented to", innerX, cursorY, innerW);
+    cursorY += 22 + 16;
+
+    // Name with underline decoration
+    doc.font("Times-Bold");
+    doc.fontSize(36); // text-4xl
+    const nameText = name || "";
+    // measure text width to draw underline accent
+    const nameWidth = doc.widthOfString(nameText);
+    const nameX = innerX + (innerW - nameWidth) / 2;
+    doc.fillColor("#111827");
+    doc.text(nameText, nameX, cursorY, { lineBreak: false });
+    // Underline accent with yellow-500 4px
+    const underlineY = cursorY + doc.currentLineHeight() + 4;
+    doc.save();
+    doc.lineWidth(4);
+    doc.strokeColor("#eab308"); // yellow-500
+    doc
+      .moveTo(nameX, underlineY)
+      .lineTo(nameX + nameWidth, underlineY)
+      .stroke();
+    doc.restore();
+    cursorY += doc.currentLineHeight() + 24;
+
+    // Description
+    doc.font("Times-Roman");
+    doc.fontSize(20); // text-xl
+    doc.fillColor("#374151"); // gray-700
+    const desc = "For outstanding performance in the Debate & Quiz Club";
+    centerText(doc, desc, innerX, cursorY, innerW);
+    cursorY += 20 + 12;
+
+    // Score
+    const scoreLine = `Score: ${score} out of ${total}`;
+    centerText(doc, scoreLine, innerX, cursorY, innerW);
+    cursorY += 20 + 24;
+
+    // Footer: Date centered lower with mt-12 (~48px)
+    cursorY += 48;
+    doc.font("Times-Bold").fontSize(18).fillColor("#111827");
+    centerText(doc, "Date", innerX, cursorY, innerW);
+    cursorY += 18 + 6;
+    doc.font("Times-Roman").fontSize(16).fillColor("#374151");
+    centerText(doc, date || "", innerX, cursorY, innerW);
+
+    doc.end();
+    const pdfBuffer = await pdfDone;
+
+    // Send email with PDF attachment
+    let transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "iiedebateandquizclub@gmail.com",
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
 
     await transporter.sendMail({
-      from: 'IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>',
+      from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
       to: email,
       subject: "Your Certificate of Participation 🎓",
-      text: `Hello ${name},
-
-Thank you for taking part in our online quiz! 🎉
-Please find attached your certificate of participation.
-
-Warm regards,
-IIE Debate & Quiz Club`,
-      attachments: [
-        { filename: "certificate.png", content: png, contentType: "image/png" }
-      ]
+      text: `Hello ${name},\n\nThank you for taking part in our online quiz! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
+      attachments: [{ filename: "certificate.pdf", content: pdfBuffer }],
     });
 
     res.json({ message: "Certificate sent successfully" });
   } catch (err) {
-    console.error("❌ Error sending certificate:", err?.stack || err);
-    res.status(500).json({ message: "Error sending certificate", error: err?.message || "Unknown error" });
+    console.error("❌ Error sending certificate:", err);
+    res.status(500).json({ message: "Error sending certificate" });
   }
+};
+
+// Helpers
+function roundedRect(doc, x, y, w, h, r) {
+  doc.moveTo(x + r, y);
+  doc.lineTo(x + w - r, y);
+  doc.quadraticCurveTo(x + w, y, x + w, y + r);
+  doc.lineTo(x + w, y + h - r);
+  doc.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  doc.lineTo(x + r, y + h);
+  doc.quadraticCurveTo(x, y + h, x, y + h - r);
+  doc.lineTo(x, y + r);
+  doc.quadraticCurveTo(x, y, x + r, y);
+}
+
+function centerText(doc, text, x, y, width) {
+  doc.text(text, x, y, { width, align: "center" });
 }
 
 module.exports = { sendCertificate };
