@@ -29,8 +29,12 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // Routes
+
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static("../frontend/build"));
+  console.log("Serving static files from ../frontend/dist");
+  app.use("/", express.static("frontend/dist"));
+  app.use("/dashboard", express.static("frontend/dist"));
+  app.use("/thank-you", express.static("frontend/dist"));
 }
 
 app.use("/api/users", authRoutes);
