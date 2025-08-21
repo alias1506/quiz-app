@@ -133,10 +133,11 @@ function App() {
       <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <User className="w-8 h-8 text-blue-600" />
+            {/* <User className="w-8 h-8 text-blue-600" /> */}
+            <img src="./club-logo.jpg" alt="Club Logo" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            Welcome to Quiz App
+            Welcome to <span className="text-blue-600">Quizopolis</span>
           </h1>
           <p className="text-gray-600">
             Please fill out the form below to get started.
