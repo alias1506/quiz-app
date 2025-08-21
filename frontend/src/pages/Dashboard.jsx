@@ -24,7 +24,9 @@ function Dashboard() {
   const hasInitialized = useRef(false);
 
   const API_BASE_URL =
-    (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.MODE === "production")
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.MODE === "production"
       ? ""
       : "http://localhost:5000";
 
@@ -330,9 +332,6 @@ function Dashboard() {
               </h1>
               {activeSet && (
                 <div className="mb-3">
-                  <span className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold">
-                    {activeSet.name}
-                  </span>
                   <p className="text-xs text-gray-500 mt-1">
                     All {questions.length} questions completed
                   </p>
