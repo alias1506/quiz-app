@@ -10,6 +10,8 @@ import {
   Loader2,
 } from "lucide-react";
 import Swal from "sweetalert2"; // ✅ use alerts
+import { useSecurity } from "../contexts/SecurityContext";
+import NotFound from "./NotFound";
 
 function Dashboard() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -586,4 +588,13 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+// Wrap Dashboard with security check
+export default function DashboardWrapper() {
+  const { showError } = useSecurity();
+  
+  if (showError) {
+    return <NotFound />;
+  }
+  
+  return <Dashboard />;
+}

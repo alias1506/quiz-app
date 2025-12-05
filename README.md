@@ -1,0 +1,718 @@
+# 🎯 Quiz Application - Student Portal
+
+<div align="center">
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![MongoDB](https://img.shields.io/badge/database-MongoDB-green.svg)
+
+**A modern, secure, and feature-rich quiz application built with React and Node.js**
+
+[Features](#features) • [Tech Stack](#tech-stack) • [Installation](#installation) • [Usage](#usage) • [API Documentation](#api-documentation)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [API Documentation](#api-documentation)
+- [Security Features](#security-features)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## 🎓 Overview
+
+The Quiz Application is a comprehensive online examination platform designed for students to take quizzes and earn certificates. Built with modern web technologies, it offers a seamless user experience with real-time validation, certificate generation, and advanced security features to ensure fair assessments.
+
+### Key Highlights
+
+- 🔐 **Secure Authentication** - Session-based authentication with password validation
+- 📝 **Interactive Quizzes** - Dynamic question loading from active question sets
+- 🏆 **Certificate Generation** - Automatic PDF certificate generation for qualified students
+- 🛡️ **Anti-Cheating Measures** - DevTools detection and tab switch monitoring
+- 📱 **Responsive Design** - Optimized for desktop and mobile devices
+- 🎨 **Modern UI/UX** - Clean, intuitive interface built with React
+
+---
+
+## ✨ Features
+
+### User Features
+
+#### Authentication & Registration
+- ✅ User registration with email validation
+- ✅ Secure login with encrypted passwords
+- ✅ Session management with automatic timeout
+- ✅ User-friendly error messages
+
+#### Quiz Taking
+- ✅ Dynamic question loading from active sets
+- ✅ Multiple-choice questions with 4 options
+- ✅ Real-time answer validation
+- ✅ Progress tracking throughout the quiz
+- ✅ Automatic submission on time limit (if implemented)
+
+#### Certificate Generation
+- ✅ Automatic PDF certificate creation for passing students
+- ✅ Personalized certificates with student name and score
+- ✅ Download and email delivery options
+- ✅ Professional certificate design
+
+#### Security Features
+- ✅ DevTools detection and warning system
+- ✅ Tab switch monitoring and automatic submission
+- ✅ Session-based authentication
+- ✅ Protected routes with authentication guards
+- ✅ Secure API endpoints
+
+### Technical Features
+
+- 📊 RESTful API architecture
+- 🔄 Real-time data synchronization
+- 💾 MongoDB database integration
+- 📧 Email notifications with Nodemailer
+- 📄 PDF generation with PDFKit
+- 🎨 Modern React frontend with hooks
+- 🔒 Secure backend with Express.js
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React** | 19.1.1 | UI framework for building interactive interfaces |
+| **React Router** | ^6.x | Client-side routing and navigation |
+| **Vite** | ^5.4.11 | Fast build tool and development server |
+| **ESLint** | ^9.15.0 | Code linting and quality assurance |
+| **SweetAlert2** | Latest | Beautiful, responsive alert dialogs |
+
+### Backend
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Node.js** | ≥16.0.0 | JavaScript runtime environment |
+| **Express** | 5.1.0 | Web application framework |
+| **MongoDB** | 8.17.1 | NoSQL database for data storage |
+| **Mongoose** | 8.17.1 | MongoDB object modeling |
+| **PDFKit** | 0.17.1 | PDF document generation |
+| **Nodemailer** | 7.0.5 | Email sending functionality |
+| **Axios** | 1.11.0 | HTTP client for API requests |
+| **Validator** | 13.15.15 | String validation and sanitization |
+
+### Development Tools
+
+| Tool | Purpose |
+|------|---------|
+| **Nodemon** | Automatic server restart during development |
+| **Concurrently** | Run multiple commands concurrently |
+| **dotenv** | Environment variable management |
+
+---
+
+## 🏗️ Architecture
+
+```
+quiz-app/
+├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── components/      # Reusable React components
+│   │   │   ├── Certificate.jsx          # Certificate display component
+│   │   │   ├── DevToolsDetector.jsx     # Security component
+│   │   │   ├── ProtectedRoute.jsx       # Route protection
+│   │   │   ├── BlockIfLoggedIn.jsx      # Login page protection
+│   │   │   └── ThankYouGuard.jsx        # Thank you page guard
+│   │   ├── pages/           # Page components
+│   │   │   ├── Dashboard.jsx            # Main quiz dashboard
+│   │   │   ├── Starting.jsx             # Login/Register page
+│   │   │   ├── ThankYou.jsx             # Post-quiz page
+│   │   │   └── NotFound.jsx             # 404 error page
+│   │   ├── contexts/        # React contexts
+│   │   │   └── SecurityContext.jsx      # Security monitoring context
+│   │   ├── App.jsx          # Main App component
+│   │   ├── main.jsx         # Application entry point
+│   │   └── index.css        # Global styles
+│   ├── public/              # Static assets
+│   ├── index.html           # HTML template
+│   ├── vite.config.js       # Vite configuration
+│   └── package.json         # Frontend dependencies
+│
+├── backend/                  # Node.js backend application
+│   ├── routes/              # API route handlers
+│   │   ├── authRoute.js                 # Authentication routes
+│   │   ├── questionRoute.js             # Question management
+│   │   ├── setsRoute.js                 # Quiz set management
+│   │   └── certificateRoute.js          # Certificate generation
+│   ├── models/              # Mongoose schemas
+│   │   ├── authModel.js                 # User model
+│   │   ├── questionModel.js             # Question model
+│   │   └── setsModel.js                 # Quiz set model
+│   ├── controllers/         # Business logic
+│   │   └── certificateController.js     # Certificate logic
+│   ├── server.js            # Server entry point
+│   ├── .env                 # Environment variables
+│   └── package.json         # Backend dependencies
+│
+├── package.json             # Root package file
+└── README.md               # This file
+```
+
+---
+
+## 📦 Installation
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v16.0.0 or higher)
+- **MongoDB** (v4.4 or higher)
+- **npm** or **yarn** package manager
+- **Git** (for cloning the repository)
+
+### Step-by-Step Installation
+
+#### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd quiz-app
+```
+
+#### 2. Install Dependencies
+
+```bash
+# Install root dependencies
+npm install
+
+# Install backend dependencies
+npm run install-backend
+
+# Install frontend dependencies
+npm run install-frontend
+
+# Or install all at once
+npm run install-all
+```
+
+#### 3. Configure Environment Variables
+
+Create a `.env` file in the `backend/` directory:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database Configuration
+MONGO_URI=mongodb://localhost:27017/Quiz
+
+# Email Configuration (Nodemailer)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+
+# Application Settings
+PASS_THRESHOLD=50
+CERT_VALIDITY_DAYS=365
+```
+
+#### 4. Start MongoDB
+
+```bash
+# Start MongoDB service
+mongod --dbpath=/path/to/data/directory
+
+# Or if using MongoDB as a service
+sudo systemctl start mongod
+```
+
+#### 5. Run the Application
+
+```bash
+# Development mode (both frontend and backend)
+npm run dev
+
+# Or run separately:
+
+# Backend only
+npm run backend
+
+# Frontend only
+npm run frontend
+
+# Production mode
+npm start
+```
+
+The application will be available at:
+- Frontend: `http://localhost:5173` (Vite dev server)
+- Backend API: `http://localhost:5000`
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `PORT` | Backend server port | 5000 | No |
+| `MONGO_URI` | MongoDB connection string | - | Yes |
+| `EMAIL_HOST` | SMTP server host | smtp.gmail.com | Yes (for emails) |
+| `EMAIL_PORT` | SMTP server port | 587 | Yes (for emails) |
+| `EMAIL_USER` | Email account username | - | Yes (for emails) |
+| `EMAIL_PASSWORD` | Email account password | - | Yes (for emails) |
+| `NODE_ENV` | Environment (development/production) | development | No |
+| `PASS_THRESHOLD` | Minimum passing score percentage | 50 | No |
+
+### Gmail Configuration (for Nodemailer)
+
+To use Gmail for sending certificates:
+
+1. Enable 2-Step Verification in your Google Account
+2. Generate an App Password:
+   - Go to Google Account → Security → 2-Step Verification → App passwords
+   - Generate a new app password for "Mail"
+3. Use the app password in `EMAIL_PASSWORD`
+
+---
+
+## 🚀 Usage
+
+### For Students
+
+#### 1. Registration/Login
+```
+Navigate to: http://localhost:5173
+↓
+Register new account or Login
+↓
+Enter credentials
+↓
+Access Dashboard
+```
+
+#### 2. Taking a Quiz
+```
+Dashboard
+↓
+View available questions
+↓
+Select answers for each question
+↓
+Submit quiz
+↓
+View results and certificate (if passed)
+```
+
+#### 3. Receiving Certificate
+```
+Complete quiz with passing score
+↓
+Certificate automatically generated
+↓
+Download PDF or receive via email
+↓
+Certificate saved in database
+```
+
+### For Developers
+
+#### Starting Development Server
+
+```bash
+# Start both frontend and backend
+npm run dev
+
+# Access:
+# - Frontend: http://localhost:5173
+# - Backend API: http://localhost:5000
+# - MongoDB: mongodb://localhost:27017
+```
+
+#### Building for Production
+
+```bash
+# Build frontend
+npm run build
+
+# Start production server
+npm start
+```
+
+---
+
+## 📚 API Documentation
+
+### Base URL
+```
+http://localhost:5000/api
+```
+
+### Authentication Endpoints
+
+#### Register User
+```http
+POST /api/users/register
+Content-Type: application/json
+
+{
+  "userId": "student123",
+  "password": "SecurePass123!",
+  "name": "John Doe",
+  "email": "john.doe@example.com"
+}
+
+Response: 201 Created
+{
+  "message": "User registered successfully",
+  "userId": "student123"
+}
+```
+
+#### Login
+```http
+POST /api/users/login
+Content-Type: application/json
+
+{
+  "userId": "student123",
+  "password": "SecurePass123!"
+}
+
+Response: 200 OK
+{
+  "message": "Login successful",
+  "user": {
+    "userId": "student123",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "role": "student"
+  }
+}
+```
+
+#### Check User Existence
+```http
+GET /api/users/check/:userId
+
+Response: 200 OK
+{
+  "exists": true,
+  "userId": "student123"
+}
+```
+
+### Question Endpoints
+
+#### Get All Questions
+```http
+GET /api/questions
+
+Response: 200 OK
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "question": "What is the capital of France?",
+    "options": ["London", "Berlin", "Paris", "Madrid"],
+    "correctAnswer": "Paris",
+    "set": {
+      "_id": "507f1f77bcf86cd799439012",
+      "name": "Geography",
+      "isActive": true
+    }
+  }
+]
+```
+
+#### Get Questions by Active Sets
+```http
+GET /api/questions/active
+
+Response: 200 OK
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "question": "What is 2+2?",
+    "options": ["2", "3", "4", "5"],
+    "correctAnswer": "4",
+    "set": {...}
+  }
+]
+```
+
+### Certificate Endpoints
+
+#### Generate Certificate
+```http
+POST /api/certificate/generate
+Content-Type: application/json
+
+{
+  "userId": "student123",
+  "score": 85,
+  "totalQuestions": 100
+}
+
+Response: 200 OK
+{
+  "message": "Certificate generated successfully",
+  "certificateUrl": "/certificates/student123_certificate.pdf"
+}
+```
+
+#### Send Certificate via Email
+```http
+POST /api/certificate/send-email
+Content-Type: application/json
+
+{
+  "userId": "student123",
+  "email": "john.doe@example.com"
+}
+
+Response: 200 OK
+{
+  "message": "Certificate sent successfully to john.doe@example.com"
+}
+```
+
+### Quiz Set Endpoints
+
+#### Get All Sets
+```http
+GET /api/sets
+
+Response: 200 OK
+[
+  {
+    "_id": "507f1f77bcf86cd799439012",
+    "name": "Geography",
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  }
+]
+```
+
+#### Get Active Set
+```http
+GET /api/sets/active
+
+Response: 200 OK
+{
+  "_id": "507f1f77bcf86cd799439012",
+  "name": "Geography",
+  "isActive": true
+}
+```
+
+---
+
+## 🔒 Security Features
+
+### Authentication & Session Management
+
+- **Session-based Authentication**: Secure session management with automatic timeout
+- **Password Validation**: Strong password requirements enforced
+- **Protected Routes**: Client-side route guards prevent unauthorized access
+- **Secure API Endpoints**: Backend validation on all sensitive operations
+
+### Anti-Cheating Measures
+
+#### DevTools Detection
+```javascript
+// Monitors for developer tools opening
+// Warns user and can trigger auto-submit
+- Keyboard shortcut detection (F12, Ctrl+Shift+I)
+- Window resize detection
+- DevTools-open detection
+```
+
+#### Tab Switch Monitoring
+```javascript
+// Tracks when user leaves the quiz tab
+// Can enforce strict proctoring rules
+- Visibility API integration
+- Warning system
+- Automatic submission on multiple violations
+```
+
+#### Context Security
+```javascript
+// Prevents copying and other context menu actions
+- Right-click disabled during quiz
+- Text selection restrictions
+- Copy-paste prevention
+```
+
+### Data Security
+
+- **Input Sanitization**: All user inputs sanitized before processing
+- **SQL/NoSQL Injection Prevention**: Mongoose protections + validation
+- **XSS Protection**: React's built-in XSS protection
+- **CORS Configuration**: Controlled cross-origin resource sharing
+
+---
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run backend tests
+cd backend
+npm test
+
+# Run frontend tests
+cd frontend
+npm test
+
+# Run all tests
+npm test
+```
+
+### Test Coverage
+
+- Unit tests for API endpoints
+- Integration tests for database operations
+- Component tests for React components
+- End-to-end tests for critical user flows
+
+---
+
+## 📊 Database Management
+
+### MongoDB Commands
+
+```bash
+# Connect to MongoDB
+mongo
+
+# Switch to Quiz database
+use Quiz
+
+# View all collections
+show collections
+
+# Query users
+db.users.find().pretty()
+
+# Query questions
+db.questions.find().pretty()
+
+# Query quiz sets
+db.quizsets.find().pretty()
+
+# Clear database (CAUTION!)
+db.dropDatabase()
+```
+
+### Backup and Restore
+
+```bash
+# Backup database
+mongodump --db Quiz --out ./backup
+
+# Restore database
+mongorestore --db Quiz ./backup/Quiz
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Code Style
+
+- Follow ESLint configuration
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Write unit tests for new features
+
+### Commit Messages
+
+```
+feat: Add new feature
+fix: Fix bug in feature
+docs: Update documentation
+style: Format code
+refactor: Refactor code structure
+test: Add tests
+chore: Update dependencies
+```
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👥 Authors
+
+- **IIE Tech Club** - Initial work and maintenance
+
+---
+
+## 🙏 Acknowledgments
+
+- React team for the amazing framework
+- MongoDB team for the database solution
+- Node.js community for excellent packages
+- All contributors who have helped this project grow
+
+---
+
+## 📞 Support
+
+For support, email support@iietechclub.com or open an issue in the repository.
+
+---
+
+## 🗺️ Roadmap
+
+### Upcoming Features
+
+- [ ] Timer functionality for quizzes
+- [ ] Question shuffling for fairness
+- [ ] Multiple quiz attempts
+- [ ] Detailed score breakdown
+- [ ] Student performance analytics
+- [ ] Mobile app version
+- [ ] Dark mode support
+- [ ] Multi-language support
+
+---
+
+<div align="center">
+
+**Made with ❤️ by IIE Tech Club**
+
+[⬆ Back to Top](#-quiz-application---student-portal)
+
+</div>

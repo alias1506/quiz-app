@@ -5,11 +5,16 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import BlockIfLoggedIn from "./components/BlockIfLoggedIn";
 import ThankYou from "./pages/ThankYou";
 import ThankYouGuard from "./components/ThankYouGuard";
+import NotFound from "./pages/NotFound";
+import DevToolsDetector from "./components/DevToolsDetector";
+import { SecurityProvider } from "./contexts/SecurityContext";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <SecurityProvider>
+        <DevToolsDetector />
+        <Routes>
         <Route
           path="/"
           element={
@@ -35,7 +40,9 @@ function App() {
           }
         />
         {/* <Route path="/certificate" element={<Certificate />} /> */}
-      </Routes>
+        <Route path="*" element={<NotFound />} />
+        </Routes>
+      </SecurityProvider>
     </BrowserRouter>
   );
 }

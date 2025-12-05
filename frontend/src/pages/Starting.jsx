@@ -39,6 +39,13 @@ function App() {
     }
   };
 
+  const formatTimeRemaining = (milliseconds) => {
+    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
+    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -72,7 +79,8 @@ function App() {
           ? ""
           : "http://localhost:5000";
 
-      const response = await fetch(`${API_BASE_URL}/api/users/check-email`, {
+      // Step 1: Check if email exists and get attempt status
+      const checkResponse = await fetch(`${API_BASE_URL}/api/users/check-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,42 +88,186 @@ function App() {
         body: JSON.stringify({ email: formData.email }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!checkResponse.ok) {
+        throw new Error(`HTTP error! status: ${checkResponse.status}`);
       }
 
-      const res = await response.json();
+      const emailCheck = await checkResponse.json();
 
-      if (res.exists) {
-        // Email already registered - show error and DON'T store data or redirect
-        Swal.fire({
-          title: "Email Already Registered",
-          text: "This email is already registered. Please use a different email address.",
-          icon: "error",
-          confirmButtonColor: "#3b82f6",
-          confirmButtonText: "Try Again",
+      // Step 2: If user exists, check their attempt status
+      if (emailCheck.exists) {
+        const attemptsResponse = await fetch(`${API_BASE_URL}/api/users/check-attempts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: formData.email }),
         });
-        // Optionally clear email field
-        setFormData((prev) => ({ ...prev, email: "" }));
-      } else {
-        // SUCCESS: Email is new - store data and redirect
-        storeInSession(formData);
 
-        Swal.fire({
-          title: "Success!",
-          text: "Registration successful. Redirecting to dashboard...",
+        if (!attemptsResponse.ok) {
+          throw new Error(`HTTP error! status: ${attemptsResponse.status}`);
+        }
+
+        const attemptsData = await attemptsResponse.json();
+
+        if (!attemptsData.canAttempt) {
+          // User has exceeded daily limit
+          let countdownInterval;
+          
+          Swal.fire({
+            title: "Daily Limit Reached!",
+            html: `<p>You have used all 3 attempts for today (${attemptsData.currentAttempts}/3).</p>
+                   <p>Please try again after:</p>
+                   <p id="countdown-timer" style="font-size: 1.5em; font-weight: bold; color: #ef4444;">Calculating...</p>`,
+            icon: "warning",
+            confirmButtonColor: "#3b82f6",
+            confirmButtonText: "OK",
+            didOpen: () => {
+              const countdownElement = document.getElementById('countdown-timer');
+              let timeLeft = attemptsData.timeUntilReset;
+              
+              const updateCountdown = () => {
+                if (timeLeft <= 0) {
+                  countdownElement.textContent = "0h 0m 0s";
+                  clearInterval(countdownInterval);
+                  return;
+                }
+                
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                timeLeft -= 1000;
+              };
+              
+              updateCountdown();
+              countdownInterval = setInterval(updateCountdown, 1000);
+            },
+            willClose: () => {
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+              }
+            }
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // User can attempt - show remaining attempts
+        const result = await Swal.fire({
+          title: "Welcome Back!",
+          html: `<p>You can attempt the quiz.</p>
+                 <p style="font-size: 1.2em; font-weight: bold;">Attempts: ${attemptsData.currentAttempts + 1}/3</p>`,
+          icon: "info",
+          confirmButtonColor: "#3b82f6",
+          confirmButtonText: "Start Quiz",
+          showCancelButton: true,
+          cancelButtonColor: "#6b7280",
+        });
+
+        if (!result.isConfirmed) {
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // New user - show they have 3 attempts
+        const result = await Swal.fire({
+          title: "Welcome!",
+          html: `<p>This is your first attempt.</p>
+                 <p style="font-size: 1.2em; font-weight: bold;">Attempts: 1/3</p>`,
           icon: "success",
           confirmButtonColor: "#3b82f6",
-          timer: 1500,
-          showConfirmButton: false,
-        }).then(() => {
-          navigate("/dashboard");
+          confirmButtonText: "Start Quiz",
+          showCancelButton: true,
+          cancelButtonColor: "#6b7280",
         });
-      }
-    } catch (err) {
-      console.error("Error checking email:", err);
 
-      // Show error message and DON'T store data or redirect
+        if (!result.isConfirmed) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Step 3: Record the attempt
+      const recordResponse = await fetch(`${API_BASE_URL}/api/users/record-attempt`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          name: formData.name, 
+          email: formData.email 
+        }),
+      });
+
+      if (!recordResponse.ok) {
+        const errorData = await recordResponse.json();
+        if (recordResponse.status === 429) {
+          // Somehow still hit the limit
+          let countdownInterval;
+          
+          Swal.fire({
+            title: "Daily Limit Reached!",
+            html: `<p>You have used all 3 attempts for today.</p>
+                   <p>Please try again after:</p>
+                   <p id="countdown-timer-2" style="font-size: 1.5em; font-weight: bold; color: #ef4444;">Calculating...</p>`,
+            icon: "warning",
+            confirmButtonColor: "#3b82f6",
+            confirmButtonText: "OK",
+            didOpen: () => {
+              const countdownElement = document.getElementById('countdown-timer-2');
+              let timeLeft = errorData.timeUntilReset;
+              
+              const updateCountdown = () => {
+                if (timeLeft <= 0) {
+                  countdownElement.textContent = "0h 0m 0s";
+                  clearInterval(countdownInterval);
+                  return;
+                }
+                
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                timeLeft -= 1000;
+              };
+              
+              updateCountdown();
+              countdownInterval = setInterval(updateCountdown, 1000);
+            },
+            willClose: () => {
+              if (countdownInterval) {
+                clearInterval(countdownInterval);
+              }
+            }
+          });
+          setIsLoading(false);
+          return;
+        }
+        throw new Error(errorData.message || "Failed to record attempt");
+      }
+
+      const recordData = await recordResponse.json();
+
+      // Store in session and navigate
+      storeInSession(formData);
+
+      Swal.fire({
+        title: "Success!",
+        text: `Attempt ${recordData.currentAttempts}/3 recorded. Starting quiz...`,
+        icon: "success",
+        confirmButtonColor: "#3b82f6",
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
+        navigate("/dashboard");
+      });
+
+    } catch (err) {
+      console.error("Error processing quiz start:", err);
+
       Swal.fire({
         title: "Connection Error",
         text: "Unable to connect to server. Please check your internet connection and try again.",

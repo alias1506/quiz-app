@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle, Home, RotateCcw } from "lucide-react";
+import { useSecurity } from "../contexts/SecurityContext";
+import NotFound from "./NotFound";
 
 function ThankYou() {
   // Local state to render user's name once, even after session is cleared
@@ -79,4 +81,13 @@ function ThankYou() {
   );
 }
 
-export default ThankYou;
+// Wrap ThankYou with security check
+export default function ThankYouWrapper() {
+  const { showError } = useSecurity();
+  
+  if (showError) {
+    return <NotFound />;
+  }
+  
+  return <ThankYou />;
+}

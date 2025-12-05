@@ -1,0 +1,15 @@
+.four_zero_four_bg {
+  background-image: url(https://cdn.dribbble.com/users/285475/screenshots/2083086/dribbble_1.gif);
+  height: 300px;
+  width: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .four_zero_four_bg {
+    height: 400px;
+  }
+}
