@@ -185,7 +185,7 @@ Before you begin, ensure you have the following installed:
 #### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/alias1506/quiz-app.git
 cd quiz-app
 ```
 
