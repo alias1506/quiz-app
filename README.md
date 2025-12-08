@@ -9,7 +9,7 @@
 
 **A modern, secure, and feature-rich quiz application built with React and Node.js**
 
-[Features](#features) • [Tech Stack](#tech-stack) • [Installation](#installation) • [Configuration](#configuration)
+[Live Demo](https://quiz-app-wpgi.onrender.com) • [Features](#features) • [Tech Stack](#tech-stack) • [Installation](#installation)
 
 </div>
 
@@ -169,18 +169,26 @@ quiz-app/
 
 ---
 
+## 🚀 Live Application
+
+**Student Portal:** [https://quiz-app-wpgi.onrender.com](https://quiz-app-wpgi.onrender.com)
+
+Access the live quiz application to:
+- Register and take quizzes
+- Earn certificates
+- Track your progress
+
+---
+
 ## 📦 Installation
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
-
 - **Node.js** (v16.0.0 or higher)
 - **MongoDB** (v4.4 or higher)
 - **npm** or **yarn** package manager
-- **Git** (for cloning the repository)
 
-### Step-by-Step Installation
+### Quick Start
 
 #### 1. Clone the Repository
 
@@ -192,16 +200,7 @@ cd quiz-app
 #### 2. Install Dependencies
 
 ```bash
-# Install root dependencies
-npm install
-
-# Install backend dependencies
-npm run install-backend
-
-# Install frontend dependencies
-npm run install-frontend
-
-# Or install all at once
+# Install all dependencies
 npm run install-all
 ```
 
@@ -222,42 +221,17 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
-
-# Application Settings
-PASS_THRESHOLD=50
-CERT_VALIDITY_DAYS=365
 ```
 
-#### 4. Start MongoDB
-
-```bash
-# Start MongoDB service
-mongod --dbpath=/path/to/data/directory
-
-# Or if using MongoDB as a service
-sudo systemctl start mongod
-```
-
-#### 5. Run the Application
+#### 4. Run the Application
 
 ```bash
 # Development mode (both frontend and backend)
 npm run dev
-
-# Or run separately:
-
-# Backend only
-npm run backend
-
-# Frontend only
-npm run frontend
-
-# Production mode
-npm start
 ```
 
 The application will be available at:
-- Frontend: `http://localhost:5173` (Vite dev server)
+- Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:5000`
 
 ---
@@ -277,15 +251,13 @@ The application will be available at:
 | `NODE_ENV` | Environment (development/production) | development | No |
 | `PASS_THRESHOLD` | Minimum passing score percentage | 50 | No |
 
-### Gmail Configuration (for Nodemailer)
+### Email Setup
 
-To use Gmail for sending certificates:
+For certificate delivery via email:
 
 1. Enable 2-Step Verification in your Google Account
-2. Generate an App Password:
-   - Go to Google Account → Security → 2-Step Verification → App passwords
-   - Generate a new app password for "Mail"
-3. Use the app password in `EMAIL_PASSWORD`
+2. Generate an App Password in Google Account Settings
+3. Use the app password in `EMAIL_PASSWORD` variable
 
 ---
 

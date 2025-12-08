@@ -19,9 +19,11 @@ function Dashboard() {
   const [showResults, setShowResults] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [activeSet, setActiveSet] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false); // ✅ show loader while sending
+  const [showRules, setShowRules] = useState(true);
+  const [fetchingQuestions, setFetchingQuestions] = useState(false);
 
   const hasInitialized = useRef(false);
 
@@ -111,12 +113,8 @@ function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    if (!hasInitialized.current) {
-      hasInitialized.current = true;
-      initializeQuiz();
-    }
-  }, []);
+  // Quiz starts only when user clicks Start Quiz button
+  // No auto-initialization
 
   const handleOptionSelect = (index) => {
     setAnswers((prev) => ({
@@ -139,8 +137,131 @@ function Dashboard() {
   const handleRestart = async () => {
     // Disabled while sending — guard here as well
     if (sending) return;
-    setShowResults(false);
-    await initializeQuiz();
+
+    try {
+      const user = JSON.parse(sessionStorage.getItem("user")) || {};
+      const { name, email } = user;
+
+      if (!name || !email) {
+        await Swal.fire({
+          title: "Session Error",
+          text: "User information not found. Please login again.",
+          icon: "error",
+          confirmButtonColor: "#3b82f6",
+        });
+        return;
+      }
+
+      // Check attempts before allowing retake
+      const attemptsResponse = await fetch(`${API_BASE_URL}/api/users/check-attempts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email }),
+      });
+
+      if (!attemptsResponse.ok) {
+        throw new Error(`HTTP error! status: ${attemptsResponse.status}`);
+      }
+
+      const attemptsData = await attemptsResponse.json();
+
+      if (!attemptsData.canAttempt) {
+        // User has exhausted attempts
+        let countdownInterval;
+        
+        await Swal.fire({
+          title: "Daily Limit Reached!",
+          html: `<p>You have used all 3 attempts for today (${attemptsData.currentAttempts}/3).</p>
+                 <p>Please try again after:</p>
+                 <p id="countdown-timer" style="font-size: 1.5em; font-weight: bold; color: #ef4444;">Calculating...</p>`,
+          icon: "warning",
+          confirmButtonColor: "#3b82f6",
+          confirmButtonText: "OK",
+          didOpen: () => {
+            const countdownElement = document.getElementById('countdown-timer');
+            let timeLeft = attemptsData.timeUntilReset;
+            
+            const updateCountdown = () => {
+              if (timeLeft <= 0) {
+                countdownElement.textContent = "0h 0m 0s";
+                clearInterval(countdownInterval);
+                return;
+              }
+              
+              const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+              const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+              
+              countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+              timeLeft -= 1000;
+            };
+            
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+          },
+          willClose: () => {
+            if (countdownInterval) {
+              clearInterval(countdownInterval);
+            }
+          }
+        });
+        return;
+      }
+
+      // User can attempt - show remaining attempts
+      const result = await Swal.fire({
+        title: "Retake Quiz?",
+        html: `<p>You can attempt the quiz again.</p>
+               <p style="font-size: 1.2em; font-weight: bold;">Attempts: ${attemptsData.currentAttempts + 1}/3</p>`,
+        icon: "info",
+        confirmButtonColor: "#3b82f6",
+        confirmButtonText: "Start Quiz",
+        showCancelButton: true,
+        cancelButtonColor: "#6b7280",
+        cancelButtonText: "Cancel",
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      // Record the new attempt
+      const recordResponse = await fetch(`${API_BASE_URL}/api/users/record-attempt`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email }),
+      });
+
+      if (!recordResponse.ok) {
+        const errorData = await recordResponse.json();
+        if (recordResponse.status === 429) {
+          await Swal.fire({
+            title: "Daily Limit Reached!",
+            text: "You have used all 3 attempts for today.",
+            icon: "warning",
+            confirmButtonColor: "#3b82f6",
+          });
+          return;
+        }
+        throw new Error(errorData.message || "Failed to record attempt");
+      }
+
+      // Proceed with quiz restart
+      setShowResults(false);
+      setShowRules(true);
+    } catch (err) {
+      console.error("Error checking attempts:", err);
+      await Swal.fire({
+        title: "Connection Error",
+        text: "Unable to verify attempts. Please check your internet connection.",
+        icon: "error",
+        confirmButtonColor: "#3b82f6",
+      });
+    }
   };
 
   const calculateScore = () => {
@@ -212,16 +333,11 @@ function Dashboard() {
       });
       if (!resUser.ok) {
         const errorData = await resUser.json().catch(() => ({}));
-        // If email already exists (409), show a friendlier message but still proceed
+        // If email already exists (409), silently proceed - this is expected behavior for retakes
         if (resUser.status === 409) {
-          await Swal.fire({
-            title: "Already Recorded",
-            text:
-              errorData.message ||
-              "This email already exists in the database. Proceeding with certificate.",
-            icon: "info",
-            confirmButtonColor: "#3b82f6",
-          });
+          // Don't show any alert - email existing is normal for retakes
+          // Just log it and continue
+          console.log("User already exists in database, continuing with certificate generation");
         } else {
           throw new Error(
             errorData.message || `Failed to save user: ${resUser.status}`
@@ -268,23 +384,96 @@ function Dashboard() {
     }
   };
 
+  // Rules & Regulations UI
+  if (showRules) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-3xl bg-white rounded-xl shadow-2xl p-8 border border-gray-100">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Rules & Regulations</h1>
+            <p className="text-gray-600">Please read carefully before starting the quiz</p>
+          </div>
+
+          <div className="space-y-4 mb-8 text-left">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">1</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">No Cheating Allowed</h3>
+                <p className="text-gray-600 text-sm">Opening developer tools or switching tabs will result in automatic quiz submission.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">2</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Answer All Questions</h3>
+                <p className="text-gray-600 text-sm">You must answer all questions to submit the quiz. Unanswered questions will be marked incorrect.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">3</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Review Your Answers</h3>
+                <p className="text-gray-600 text-sm">Use the Previous and Next buttons to navigate and review your answers before submitting.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">4</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">One Submission Only</h3>
+                <p className="text-gray-600 text-sm">Once submitted, you cannot change your answers. Make sure to review before submitting.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">5</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Stay Focused</h3>
+                <p className="text-gray-600 text-sm">Ensure stable internet connection and minimize distractions during the quiz.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">6</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Certificate Eligibility</h3>
+                <p className="text-gray-600 text-sm">Certificates will be generated based on your final score after quiz completion.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            {fetchingQuestions ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-3" />
+                <span className="text-gray-600">Loading questions...</span>
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  setFetchingQuestions(true);
+                  await initializeQuiz();
+                  setShowRules(false);
+                  setFetchingQuestions(false);
+                }}
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg transform hover:scale-105 active:scale-95"
+              >
+                Start Quiz
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Loading UI
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <div className="bg-white rounded-xl shadow-xl p-8 border border-gray-100">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Loading Quiz...
-              </h2>
-              <p className="text-gray-600">
-                Fetching questions, please wait...
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
       </div>
     );
   }

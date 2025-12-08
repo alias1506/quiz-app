@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST /api/users/check-email
-// Check if email exists (case-insensitive)
+// Check daily attempt limit for email
 router.post("/check-email", async (req, res) => {
   try {
     const { email } = req.body || {};
@@ -24,23 +24,47 @@ router.post("/check-email", async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const user = await User.findOne({
+    // Find most recent entry for this email
+    const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    });
+    }).sort({ lastAttemptDate: -1 });
 
-    // Keep this endpoint simple and consistent with the client expectations.
-    // Do NOT add "success" here if your client doesn't expect it.
-    if (user) {
+    if (!recentUser) {
       return res.status(200).json({
-        exists: true,
-        message: "Email already exists",
+        exists: false,
+        canAttempt: true,
+        currentAttempts: 0,
+        remainingAttempts: 3,
       });
     }
 
+    // Check if last attempt was today
+    let dailyAttempts = 0;
+    if (recentUser.lastAttemptDate) {
+      const lastAttemptDate = new Date(recentUser.lastAttemptDate);
+      const lastAttemptDay = new Date(
+        lastAttemptDate.getFullYear(),
+        lastAttemptDate.getMonth(),
+        lastAttemptDate.getDate()
+      );
+
+      if (lastAttemptDay.getTime() === today.getTime()) {
+        dailyAttempts = recentUser.dailyAttempts || 0;
+      }
+    }
+
+    const canAttempt = dailyAttempts < 3;
+    const remainingAttempts = Math.max(0, 3 - dailyAttempts);
+
     return res.status(200).json({
-      exists: false,
-      message: "Email is available",
+      exists: true,
+      canAttempt,
+      currentAttempts: dailyAttempts,
+      remainingAttempts,
+      message: canAttempt ? "You can attempt the quiz" : "Daily limit reached",
     });
   } catch (err) {
     console.error("Check email error:", err);
@@ -68,21 +92,6 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Name and email are required" });
     }
 
-    // Check duplicates BEFORE insert to return helpful message
-    for (const userData of validUsers) {
-      const normalizedEmail = String(userData.email).toLowerCase().trim();
-      const existingUser = await User.findOne({
-        email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-      });
-      if (existingUser) {
-        return res
-          .status(409)
-          .json({
-            message: `Email ${userData.email} already exists in database`,
-          });
-      }
-    }
-
     // Prepare documents
     const usersToInsert = validUsers.map((user) => ({
       name: user.name,
@@ -95,6 +104,12 @@ router.post("/", async (req, res) => {
 
     // Insert
     const savedUsers = await User.insertMany(usersToInsert, { ordered: false });
+
+    // Emit event to admin panel
+    const adminSocket = req.app.get('adminSocket');
+    if (adminSocket && adminSocket.connected) {
+      adminSocket.emit('user:created', { users: savedUsers });
+    }
 
     // Return consistent response shape for the caller expecting `success`
     return res.status(201).json({
@@ -121,6 +136,13 @@ router.delete("/:id", async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Emit event to admin panel
+    const adminSocket = req.app.get('adminSocket');
+    if (adminSocket && adminSocket.connected) {
+      adminSocket.emit('user:deleted', { userId: req.params.id });
+    }
+
     return res.json({ message: "User deleted", user: deleted });
   } catch (err) {
     console.error("Delete user error:", err);
@@ -196,7 +218,7 @@ router.post("/check-attempts", async (req, res) => {
 });
 
 // POST /api/users/record-attempt
-// Record a quiz attempt
+// Record a quiz attempt (creates new entry for each attempt)
 router.post("/record-attempt", async (req, res) => {
   try {
     const { name, email } = req.body || {};
@@ -205,84 +227,87 @@ router.post("/record-attempt", async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    let user = await User.findOne({
-      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    });
-
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    if (!user) {
-      // Create new user with first attempt
-      user = new User({
-        name: name,
-        email: normalizedEmail,
-        joinedOn: now,
-        attempts: [{ attemptNumber: 1, timestamp: now }],
-        dailyAttempts: 1,
-        lastAttemptDate: now,
-      });
-      await user.save();
+    // Find most recent entry for this email
+    const recentUser = await User.findOne({
+      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
+    }).sort({ lastAttemptDate: -1 });
 
-      return res.status(201).json({
-        success: true,
-        message: "User created and attempt recorded",
-        currentAttempts: 1,
-        remainingAttempts: 2,
-        user: {
-          name: user.name,
-          email: user.email,
-        },
-      });
-    }
+    // Calculate total attempts across all time
+    const totalAttempts = await User.countDocuments({
+      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
+    });
+    const nextAttemptNumber = totalAttempts + 1;
 
-    // User exists - check if we need to reset daily count
-    let dailyAttempts = user.dailyAttempts || 0;
+    let dailyAttempts = 0;
     
-    if (user.lastAttemptDate) {
-      const lastAttemptDate = new Date(user.lastAttemptDate);
+    if (recentUser && recentUser.lastAttemptDate) {
+      const lastAttemptDate = new Date(recentUser.lastAttemptDate);
       const lastAttemptDay = new Date(
         lastAttemptDate.getFullYear(),
         lastAttemptDate.getMonth(),
         lastAttemptDate.getDate()
       );
 
-      if (lastAttemptDay.getTime() !== today.getTime()) {
-        // New day - reset count
-        dailyAttempts = 0;
+      if (lastAttemptDay.getTime() === today.getTime()) {
+        // Same day - use existing count
+        dailyAttempts = recentUser.dailyAttempts || 0;
+
+        // Check if limit reached
+        if (dailyAttempts >= 3) {
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const timeUntilReset = tomorrow.getTime() - now.getTime();
+
+          // Still emit event even for limit reached
+          const adminSocket = req.app.get('adminSocket');
+          if (adminSocket && adminSocket.connected) {
+            adminSocket.emit('user:attempt_blocked', { 
+              email: normalizedEmail,
+              attempts: dailyAttempts 
+            });
+          }
+
+          return res.status(429).json({
+            success: false,
+            message: "Daily attempt limit reached",
+            currentAttempts: dailyAttempts,
+            remainingAttempts: 0,
+            timeUntilReset,
+          });
+        }
       }
     }
 
-    // Check if user has exceeded limit
-    if (dailyAttempts >= 3) {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const timeUntilReset = tomorrow.getTime() - now.getTime();
+    // Create new entry for this attempt
+    dailyAttempts++;
+    const newUser = new User({
+      name: name,
+      email: normalizedEmail,
+      attemptNumber: nextAttemptNumber,
+      joinedOn: now,
+      attempts: [{ attemptNumber: dailyAttempts, timestamp: now }],
+      dailyAttempts: dailyAttempts,
+      lastAttemptDate: now,
+    });
+    await newUser.save();
 
-      return res.status(429).json({
-        success: false,
-        message: "Daily attempt limit reached",
-        currentAttempts: dailyAttempts,
-        remainingAttempts: 0,
-        timeUntilReset,
-      });
+    // Emit event to admin panel
+    const adminSocket = req.app.get('adminSocket');
+    if (adminSocket && adminSocket.connected) {
+      adminSocket.emit('user:created', { users: [newUser] });
     }
 
-    // Record the attempt
-    dailyAttempts++;
-    user.attempts.push({ attemptNumber: dailyAttempts, timestamp: now });
-    user.dailyAttempts = dailyAttempts;
-    user.lastAttemptDate = now;
-    await user.save();
-
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "Attempt recorded successfully",
       currentAttempts: dailyAttempts,
       remainingAttempts: 3 - dailyAttempts,
       user: {
-        name: user.name,
-        email: user.email,
+        name: newUser.name,
+        email: newUser.email,
       },
     });
   } catch (err) {

@@ -1,12 +1,29 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import { useSecurity } from "../contexts/SecurityContext";
+import Swal from "sweetalert2";
 import "./NotFound.css";
 
 function NotFound() {
   const navigate = useNavigate();
   const { setShowError } = useSecurity();
+
+  // Close all SweetAlert modals when 404 page loads
+  useEffect(() => {
+    // Close any open SweetAlert
+    if (Swal.isVisible()) {
+      Swal.close();
+    }
+    
+    // Also check for any remaining SweetAlert containers and remove them
+    const swalContainers = document.querySelectorAll('.swal2-container');
+    swalContainers.forEach(container => container.remove());
+    
+    // Remove any backdrop/overlay
+    const swalBackdrops = document.querySelectorAll('.swal2-backdrop-show');
+    swalBackdrops.forEach(backdrop => backdrop.remove());
+  }, []);
 
   const handleGoHome = () => {
     // Clear all session storage

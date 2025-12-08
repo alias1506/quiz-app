@@ -3,6 +3,7 @@ require("dotenv").config({ path: __dirname + "/.env" });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const io = require("socket.io-client");
 
 // Ensure these filenames match your files in ./routes/
 const authRoutes = require("./routes/authRoute"); // <-- filename: authRoutes.js
@@ -12,6 +13,28 @@ const certificateRoutes = require("./routes/certificateRoute"); // <-- filename:
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Connect to admin panel's Socket.IO server
+const adminSocket = io("http://localhost:5001", {
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 10
+});
+
+adminSocket.on('connect', () => {
+  console.log('✅ Connected to admin panel Socket.IO server');
+});
+
+adminSocket.on('disconnect', () => {
+  console.log('❌ Disconnected from admin panel Socket.IO server');
+});
+
+adminSocket.on('connect_error', (error) => {
+  console.log('⚠️ Admin panel Socket.IO connection error:', error.message);
+});
+
+// Make socket available to routes
+app.set('adminSocket', adminSocket);
 
 // Middleware
 app.use(cors());

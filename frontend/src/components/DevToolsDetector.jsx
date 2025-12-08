@@ -10,17 +10,11 @@ export default function DevToolsDetector() {
     // Reset error state when on starting page
     if (location.pathname === "/") {
       setShowError(false);
-      return;
-    }
-
-    // Only check on protected pages (dashboard and thank-you)
-    if (location.pathname !== "/dashboard" && location.pathname !== "/thank-you") {
-      return;
     }
 
     let devtoolsOpen = false;
 
-    // Check if devtools is already open
+    // Check if devtools is already open (applies globally to all pages)
     const checkDevTools = () => {
       const threshold = 160;
       const widthThreshold = window.outerWidth - window.innerWidth > threshold;
@@ -34,17 +28,20 @@ export default function DevToolsDetector() {
       }
     };
 
-    // Check for tab visibility change
+    // Check for tab visibility change (only on dashboard page)
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Tab is hidden/changed
+      // Only check tab changes on dashboard
+      if (location.pathname === "/dashboard" && document.hidden) {
         setShowError(true);
       }
     };
 
-    // Check for window blur (tab change)
+    // Check for window blur/tab change (only on dashboard page)
     const handleBlur = () => {
-      setShowError(true);
+      // Only check tab changes on dashboard
+      if (location.pathname === "/dashboard") {
+        setShowError(true);
+      }
     };
 
     // Check for resize (devtools opening/closing)

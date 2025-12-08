@@ -251,19 +251,9 @@ function App() {
 
       const recordData = await recordResponse.json();
 
-      // Store in session and navigate
+      // Store in session and navigate directly
       storeInSession(formData);
-
-      Swal.fire({
-        title: "Success!",
-        text: `Attempt ${recordData.currentAttempts}/3 recorded. Starting quiz...`,
-        icon: "success",
-        confirmButtonColor: "#3b82f6",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
-        navigate("/dashboard");
-      });
+      navigate("/dashboard");
 
     } catch (err) {
       console.error("Error processing quiz start:", err);

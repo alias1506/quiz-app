@@ -10,7 +10,23 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+      index: true,
+    },
+    score: {
+      type: Number,
+      default: null,
+    },
+    total: {
+      type: Number,
+      default: null,
+    },
+    quizName: {
+      type: String,
+      default: null,
+    },
+    attemptNumber: {
+      type: Number,
+      default: 1,
     },
     joinedOn: {
       type: Date,

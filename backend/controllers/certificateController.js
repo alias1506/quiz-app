@@ -1,12 +1,39 @@
 const nodemailer = require("nodemailer");
 const PDFDocument = require("pdfkit");
 const axios = require("axios");
+const User = require("../models/authModel");
 
 const sendCertificate = async (req, res) => {
   try {
     const { name, email, score, total, date, quizName } = req.body;
 
     const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+    // Save quiz completion as new entry
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Calculate total attempts for this email
+    const totalAttempts = await User.countDocuments({
+      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
+    });
+    const attemptNumber = totalAttempts + 1;
+    
+    const newEntry = new User({
+      name: name,
+      email: normalizedEmail,
+      score: score,
+      total: total,
+      quizName: quizName || "Quiz",
+      attemptNumber: attemptNumber,
+      joinedOn: new Date(date || Date.now()),
+    });
+    await newEntry.save();
+
+    // Emit event to admin panel
+    const adminSocket = req.app.get('adminSocket');
+    if (adminSocket && adminSocket.connected) {
+      adminSocket.emit('user:created', { users: [newEntry] });
+    }
 
     // Keep your HTML (not rendered by PDFKit, but preserved as requested)
     const html = `
@@ -62,7 +89,6 @@ const sendCertificate = async (req, res) => {
     `;
 
     // Build a PDF that visually matches the Tailwind layout using PDFKit
-    // Page size chosen to closely match 1000x700 "canvas" in points (72 DPI). We’ll use a custom size.
     const width = 1000;
     const height = 700;
 
@@ -78,43 +104,35 @@ const sendCertificate = async (req, res) => {
     });
 
     // Background
-    doc.rect(0, 0, width, height).fill("#f9fafb"); // bg-gray-50
+    doc.rect(0, 0, width, height).fill("#f9fafb");
 
-    // White certificate card with border-8 yellow-600 and rounded corners
-    const cardX = 0; // center by using page background already
+    const cardX = 0;
     const cardY = 0;
     const cardW = width;
     const cardH = height;
+    const radius = 24;
 
-    // Outer rounded border
-    const radius = 24; // rounded-2xl approx
     doc.save();
-    doc.lineWidth(16); // border-8 (approx 16px)
-    doc.strokeColor("#ca8a04"); // yellow-600
-    // Draw rounded rectangle border
+    doc.lineWidth(16);
+    doc.strokeColor("#ca8a04");
     roundedRect(doc, cardX + 16, cardY + 16, cardW - 32, cardH - 32, radius);
     doc.stroke();
 
-    // Inner white fill
     doc.fillColor("#ffffff");
     roundedRect(doc, cardX + 24, cardY + 24, cardW - 48, cardH - 48, radius);
     doc.fill();
     doc.restore();
 
-    // Padding similar to p-10 (40px) inside inner card
     const pad = 40;
     const innerX = cardX + 24 + pad;
     const innerY = cardY + 24 + pad;
     const innerW = cardW - 48 - pad * 2;
-    const innerH = cardH - 48 - pad * 2;
 
-    // Top logos: left/right within inner area with px-16 (~64px side padding)
     const logosPadX = 64;
     const logosY = innerY;
-    const logosH = 112; // h-28 ~ 112px
+    const logosH = 112;
     const logosBoxW = innerW - logosPadX * 2;
 
-    // Fetch logos as buffers
     const clubLogoUrl = `${frontendBaseURL}/club-logo.jpg`;
     const collegeLogoUrl = `${frontendBaseURL}/college-logo.png`;
 
@@ -128,16 +146,15 @@ const sendCertificate = async (req, res) => {
       clubLogoBuf = Buffer.from(clubRes.data);
       collegeLogoBuf = Buffer.from(collegeRes.data);
     } catch (e) {
-      // If logos fail to load, continue without them
       clubLogoBuf = null;
       collegeLogoBuf = null;
     }
 
-    // Draw logos if available
     const leftLogoW = 200;
     const rightLogoW = 200;
     const leftLogoX = innerX + logosPadX;
     const rightLogoX = innerX + logosPadX + logosBoxW - rightLogoW;
+    
     if (clubLogoBuf) {
       doc.image(clubLogoBuf, leftLogoX, logosY, {
         fit: [leftLogoW, logosH],
@@ -153,68 +170,51 @@ const sendCertificate = async (req, res) => {
       });
     }
 
-    // Title block: mt-6 (~24px)
     let cursorY = logosY + logosH + 24;
 
-    // "Certificate of Achievement"
-    doc.fillColor("#ca8a04"); // yellow-700 like tone (Tailwind yellow-700 is #a16207, but close to keep harmony)
-    // Better: exact yellow-700 = #a16207
     doc.fillColor("#a16207");
-    doc.fontSize(48); // text-5xl approx
-    doc.font("Times-Bold"); // font-serif, bold
-    const title = "Certificate of Achievement";
-    centerText(doc, title, innerX, cursorY, innerW);
+    doc.fontSize(48);
+    doc.font("Times-Bold");
+    centerText(doc, "Certificate of Achievement", innerX, cursorY, innerW);
     cursorY += 48 + 8;
 
-    // Subtitle italic
-    doc.fillColor("#4b5563"); // gray-600
+    doc.fillColor("#4b5563");
     doc.fontSize(18);
     doc.font("Times-Italic");
     centerText(doc, "Voices and Minds United", innerX, cursorY, innerW);
     cursorY += 18 + 24;
 
-    // Main content
-    doc.fillColor("#111827"); // gray-900 for headings
+    doc.fillColor("#111827");
     doc.font("Times-Roman");
-    doc.fontSize(22); // text-2xl
+    doc.fontSize(22);
     centerText(doc, "This is proudly presented to", innerX, cursorY, innerW);
     cursorY += 22 + 16;
 
-    // Name with underline decoration
     doc.font("Times-Bold");
-    doc.fontSize(36); // text-4xl
+    doc.fontSize(36);
     const nameText = name || "";
-    // measure text width to draw underline accent
     const nameWidth = doc.widthOfString(nameText);
     const nameX = innerX + (innerW - nameWidth) / 2;
     doc.fillColor("#111827");
     doc.text(nameText, nameX, cursorY, { lineBreak: false });
-    // Underline accent with yellow-500 4px
+    
     const underlineY = cursorY + doc.currentLineHeight() + 4;
     doc.save();
     doc.lineWidth(4);
-    doc.strokeColor("#eab308"); // yellow-500
-    doc
-      .moveTo(nameX, underlineY)
-      .lineTo(nameX + nameWidth, underlineY)
-      .stroke();
+    doc.strokeColor("#eab308");
+    doc.moveTo(nameX, underlineY).lineTo(nameX + nameWidth, underlineY).stroke();
     doc.restore();
     cursorY += doc.currentLineHeight() + 24;
 
-    // Description
     doc.font("Times-Roman");
-    doc.fontSize(20); // text-xl
-    doc.fillColor("#374151"); // gray-700
-    const desc = "For outstanding performance in the Debate & Quiz Club";
-    centerText(doc, desc, innerX, cursorY, innerW);
+    doc.fontSize(20);
+    doc.fillColor("#374151");
+    centerText(doc, "For outstanding performance in the Debate & Quiz Club", innerX, cursorY, innerW);
     cursorY += 20 + 12;
 
-    // Score
-    const scoreLine = `Score: ${score} out of ${total}`;
-    centerText(doc, scoreLine, innerX, cursorY, innerW);
-    cursorY += 20 + 24;
+    centerText(doc, `Score: ${score} out of ${total}`, innerX, cursorY, innerW);
+    cursorY += 20 + 48;
 
-    // Footer: Date centered lower with mt-12 (~48px)
     cursorY += 48;
     doc.font("Times-Bold").fontSize(18).fillColor("#111827");
     centerText(doc, "Date", innerX, cursorY, innerW);
@@ -224,6 +224,11 @@ const sendCertificate = async (req, res) => {
 
     doc.end();
     const pdfBuffer = await pdfDone;
+
+    // Verify Gmail credentials are available
+    if (!process.env.GMAIL_APP_PASSWORD) {
+      throw new Error("GMAIL_APP_PASSWORD is not configured in environment variables");
+    }
 
     // Send email with PDF attachment
     let transporter = nodemailer.createTransport({
@@ -238,7 +243,7 @@ const sendCertificate = async (req, res) => {
       from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
       to: email,
       subject: "Your Certificate of Participation 🎓",
-      text: `Hello ${name},\n\nThank you for taking part in our online quiz! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
+      text: `Hello ${name},\n\nThank you for taking part in Quizopolis! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
       attachments: [{ filename: "certificate.pdf", content: pdfBuffer }],
     });
 
@@ -249,7 +254,7 @@ const sendCertificate = async (req, res) => {
   }
 };
 
-// Helpers
+// Helper functions
 function roundedRect(doc, x, y, w, h, r) {
   doc.moveTo(x + r, y);
   doc.lineTo(x + w - r, y);
