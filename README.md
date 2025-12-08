@@ -330,12 +330,3 @@ For issues or questions, please open an issue in the repository.
 - [ ] Dark mode support
 - [ ] Multi-language support
 
----
-
-<div align="center">
-
-**Built with Modern Technologies**
-
-[⬆ Back to Top](#-quiz-application---student-portal)
-
-</div>
