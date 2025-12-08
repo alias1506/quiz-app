@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, Home, RotateCcw } from "lucide-react";
 import { useSecurity } from "../contexts/SecurityContext";
 import NotFound from "./NotFound";

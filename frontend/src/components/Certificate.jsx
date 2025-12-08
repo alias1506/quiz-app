@@ -1,4 +1,4 @@
-import React from "react";
+
 
 export default function Certificate({ name, score, total, date }) {
   return (

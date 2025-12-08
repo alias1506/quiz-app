@@ -288,7 +288,6 @@ This application is fully optimized for Vercel's serverless platform.
      EMAIL_PORT=587
      EMAIL_USER=your-email@gmail.com
      EMAIL_PASSWORD=your-app-password
-     ADMIN_PANEL_URL=https://your-admin-url.vercel.app
      NODE_ENV=production
      PORT=5000
      ```
@@ -313,15 +312,9 @@ This application is fully optimized for Vercel's serverless platform.
 - ✅ **PDF Generation** - Server-side certificate creation
 - ✅ **Email Delivery** - Automated certificate sending
 
-#### Integration with Admin Panel
+#### Database Integration
 
-Set the `ADMIN_PANEL_URL` to enable communication between student portal and admin panel:
-
-```env
-ADMIN_PANEL_URL=https://quiz-app-admin-xxxx.vercel.app
-```
-
-This allows the admin panel's polling system to detect new quiz attempts automatically.
+Both student portal and admin panel use the same MongoDB database, so user data is automatically shared between them. No additional configuration needed for data synchronization.
 
 #### Troubleshooting
 

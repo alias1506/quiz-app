@@ -32,15 +32,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    attempts: {
-      type: [
-        {
-          attemptNumber: { type: Number, required: true },
-          timestamp: { type: Date, required: true },
-        },
-      ],
-      default: [],
-    },
     dailyAttempts: {
       type: Number,
       default: 0,

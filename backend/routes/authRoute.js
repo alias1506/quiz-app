@@ -267,7 +267,6 @@ router.post("/record-attempt", async (req, res) => {
       email: normalizedEmail,
       attemptNumber: nextAttemptNumber,
       joinedOn: now,
-      attempts: [{ attemptNumber: dailyAttempts, timestamp: now }],
       dailyAttempts: dailyAttempts,
       lastAttemptDate: now,
     });
