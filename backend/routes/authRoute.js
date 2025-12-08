@@ -105,12 +105,6 @@ router.post("/", async (req, res) => {
     // Insert
     const savedUsers = await User.insertMany(usersToInsert, { ordered: false });
 
-    // Emit event to admin panel
-    const adminSocket = req.app.get('adminSocket');
-    if (adminSocket && adminSocket.connected) {
-      adminSocket.emit('user:created', { users: savedUsers });
-    }
-
     // Return consistent response shape for the caller expecting `success`
     return res.status(201).json({
       success: true,
@@ -135,12 +129,6 @@ router.delete("/:id", async (req, res) => {
     const deleted = await User.findByIdAndDelete(req.params.id);
     if (!deleted) {
       return res.status(404).json({ message: "User not found" });
-    }
-
-    // Emit event to admin panel
-    const adminSocket = req.app.get('adminSocket');
-    if (adminSocket && adminSocket.connected) {
-      adminSocket.emit('user:deleted', { userId: req.params.id });
     }
 
     return res.json({ message: "User deleted", user: deleted });
@@ -261,15 +249,6 @@ router.post("/record-attempt", async (req, res) => {
           tomorrow.setDate(tomorrow.getDate() + 1);
           const timeUntilReset = tomorrow.getTime() - now.getTime();
 
-          // Still emit event even for limit reached
-          const adminSocket = req.app.get('adminSocket');
-          if (adminSocket && adminSocket.connected) {
-            adminSocket.emit('user:attempt_blocked', { 
-              email: normalizedEmail,
-              attempts: dailyAttempts 
-            });
-          }
-
           return res.status(429).json({
             success: false,
             message: "Daily attempt limit reached",
@@ -293,12 +272,6 @@ router.post("/record-attempt", async (req, res) => {
       lastAttemptDate: now,
     });
     await newUser.save();
-
-    // Emit event to admin panel
-    const adminSocket = req.app.get('adminSocket');
-    if (adminSocket && adminSocket.connected) {
-      adminSocket.emit('user:created', { users: [newUser] });
-    }
 
     return res.status(201).json({
       success: true,

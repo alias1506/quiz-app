@@ -3,7 +3,7 @@ require("dotenv").config({ path: __dirname + "/.env" });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const io = require("socket.io-client");
+const axios = require("axios");
 
 // Ensure these filenames match your files in ./routes/
 const authRoutes = require("./routes/authRoute"); // <-- filename: authRoutes.js
@@ -14,27 +14,30 @@ const certificateRoutes = require("./routes/certificateRoute"); // <-- filename:
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to admin panel's Socket.IO server
-const adminSocket = io("http://localhost:5001", {
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 10
-});
+// Admin panel URL for notifications (Vercel-compatible)
+const ADMIN_PANEL_URL = process.env.ADMIN_PANEL_URL || "http://localhost:5001";
 
-adminSocket.on('connect', () => {
-  console.log('✅ Connected to admin panel Socket.IO server');
-});
+// Helper function to notify admin panel
+async function notifyAdminPanel(endpoint, data) {
+  if (process.env.NODE_ENV === 'production') {
+    // In production (Vercel), admin will poll for updates
+    return;
+  }
+  
+  // In development, try to ping admin server
+  try {
+    await axios.post(`${ADMIN_PANEL_URL}/api/notify`, data, {
+      timeout: 2000,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    // Silently fail - admin will get updates via polling
+    console.log('Admin notification skipped (will use polling)');
+  }
+}
 
-adminSocket.on('disconnect', () => {
-  console.log('❌ Disconnected from admin panel Socket.IO server');
-});
-
-adminSocket.on('connect_error', (error) => {
-  console.log('⚠️ Admin panel Socket.IO connection error:', error.message);
-});
-
-// Make socket available to routes
-app.set('adminSocket', adminSocket);
+// Make notifyAdminPanel available to routes
+app.set('notifyAdminPanel', notifyAdminPanel);
 
 // Middleware
 app.use(cors());

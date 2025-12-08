@@ -50,7 +50,10 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { collection: "Quiz-Data" } // bind to your specific collection
+  { 
+    collection: "Quiz-Data", // bind to your specific collection
+    timestamps: true // Automatically add createdAt and updatedAt
+  }
 );
 
 const User = mongoose.model("User", userSchema);

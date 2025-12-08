@@ -29,12 +29,6 @@ const sendCertificate = async (req, res) => {
     });
     await newEntry.save();
 
-    // Emit event to admin panel
-    const adminSocket = req.app.get('adminSocket');
-    if (adminSocket && adminSocket.connected) {
-      adminSocket.emit('user:created', { users: [newEntry] });
-    }
-
     // Keep your HTML (not rendered by PDFKit, but preserved as requested)
     const html = `
     <!DOCTYPE html>

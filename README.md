@@ -236,6 +236,130 @@ The application will be available at:
 
 ---
 
+## 🚀 Deployment
+
+### Vercel Deployment (Recommended)
+
+This application is fully optimized for Vercel's serverless platform.
+
+#### Prerequisites
+
+1. **MongoDB Atlas** (Required for Vercel)
+   - Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Create a free cluster
+   - Create database user
+   - Whitelist all IPs: `0.0.0.0/0`
+   - Get connection string: `mongodb+srv://username:password@cluster.mongodb.net/Quiz`
+
+2. **Gmail App Password** (For certificate emails)
+   - Enable 2-Step Verification in Google Account
+   - Go to Security → 2-Step Verification → App passwords
+   - Generate app password for "Mail"
+   - Copy for `EMAIL_PASSWORD` variable
+
+#### Deployment Steps
+
+1. **Install Vercel CLI**
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Login to Vercel**
+   ```bash
+   vercel login
+   ```
+
+3. **Navigate to student app folder**
+   ```bash
+   cd quiz-app
+   ```
+
+4. **Deploy**
+   ```bash
+   vercel
+   ```
+
+5. **Set Environment Variables** in Vercel Dashboard:
+   - Go to Project → Settings → Environment Variables
+   - Add the following:
+     ```
+     MONGO_URI=mongodb+srv://your-connection-string
+     EMAIL_HOST=smtp.gmail.com
+     EMAIL_PORT=587
+     EMAIL_USER=your-email@gmail.com
+     EMAIL_PASSWORD=your-app-password
+     ADMIN_PANEL_URL=https://your-admin-url.vercel.app
+     NODE_ENV=production
+     PORT=5000
+     ```
+
+6. **Redeploy to apply environment variables**:
+   ```bash
+   vercel --prod
+   ```
+
+7. **Test the deployment**:
+   - Register a new user
+   - Take a quiz
+   - Check certificate email delivery
+   - Verify admin panel shows new user
+
+#### Features
+
+- ✅ **Serverless Functions** - Auto-scaling backend
+- ✅ **React Frontend** - Fast, optimized build
+- ✅ **Automatic HTTPS** - Secure by default
+- ✅ **CDN** - Global content delivery
+- ✅ **PDF Generation** - Server-side certificate creation
+- ✅ **Email Delivery** - Automated certificate sending
+
+#### Integration with Admin Panel
+
+Set the `ADMIN_PANEL_URL` to enable communication between student portal and admin panel:
+
+```env
+ADMIN_PANEL_URL=https://quiz-app-admin-xxxx.vercel.app
+```
+
+This allows the admin panel's polling system to detect new quiz attempts automatically.
+
+#### Troubleshooting
+
+**Issue: Cannot connect to MongoDB**
+- Verify MongoDB Atlas connection string
+- Check IP whitelist includes `0.0.0.0/0`
+- Ensure database exists and user has permissions
+
+**Issue: Email not sending**
+- Use Gmail App Password (not regular password)
+- Verify `EMAIL_USER` and `EMAIL_PASSWORD`
+- Check Vercel function logs for SMTP errors
+- Test SMTP credentials locally first
+
+**Issue: Certificate generation fails**
+- Check Vercel function logs
+- Verify all required data (name, email, score) is provided
+- Ensure MongoDB save is successful
+
+**Issue: Frontend build fails**
+- Check `frontend/package.json` build script
+- Verify all dependencies are listed
+- Review Vercel build logs
+
+#### Monitoring
+
+**Vercel Dashboard:**
+- View logs: Project → Deployments → (select) → Logs
+- Monitor bandwidth: Project → Analytics
+- Check errors: Project → Logs
+
+**Browser Console:**
+- Network tab for API calls
+- Console for client-side errors
+- Application tab for storage/cookies
+
+---
+
 ## ⚙️ Configuration
 
 ### Environment Variables
