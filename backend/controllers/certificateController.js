@@ -4,6 +4,9 @@ const User = require("../models/authModel");
 const { sendCertificateEmail } = require("../services/emailService");
 
 const sendCertificate = async (req, res) => {
+  console.log("🎫 Certificate endpoint hit!");
+  console.log("📥 Request body:", req.body);
+
   try {
     const { name, email, score, total, date, quizName } = req.body;
 
