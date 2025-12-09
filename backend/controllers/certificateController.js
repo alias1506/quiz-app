@@ -1,7 +1,7 @@
-const nodemailer = require("nodemailer");
 const PDFDocument = require("pdfkit");
 const axios = require("axios");
 const User = require("../models/authModel");
+const { sendCertificateEmail } = require("../services/emailService");
 
 const sendCertificate = async (req, res) => {
   try {
@@ -202,79 +202,15 @@ const sendCertificate = async (req, res) => {
     doc.end();
     const pdfBuffer = await pdfDone;
 
-    // Try to send email, but don't fail if it times out
+    // Try to send email using the email service (with automatic provider fallback)
     let emailSent = false;
-    if (process.env.GMAIL_APP_PASSWORD) {
-      try {
-        // Configure transporter for Vercel serverless environment
-        // Use port 465 with SSL for better compatibility
-        let transporter = nodemailer.createTransport({
-          host: "smtp.gmail.com",
-          port: 465, // SSL port instead of 587 TLS
-          secure: true, // Use SSL
-          auth: {
-            user: "iiedebateandquizclub@gmail.com",
-            pass: process.env.GMAIL_APP_PASSWORD,
-          },
-          tls: {
-            rejectUnauthorized: false,
-            minVersion: 'TLSv1.2'
-          },
-          connectionTimeout: 30000, // 30 seconds for serverless
-          greetingTimeout: 30000,
-          socketTimeout: 30000,
-          pool: false, // Don't pool connections in serverless
-          maxConnections: 1,
-          rateDelta: 20000,
-          rateLimit: 5,
-        });
-
-        console.log(`📧 Attempting to send certificate to: ${email}`);
-
-        // Send email with extended timeout for serverless
-        const emailPromise = transporter.sendMail({
-          from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
-          to: email,
-          subject: "Your Certificate of Participation 🎓",
-          text: `Hello ${name},\n\nThank you for taking part in Quizopolis! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #3b82f6;">Hello ${name},</h2>
-              <p style="font-size: 16px; line-height: 1.6;">
-                Thank you for taking part in <strong>Quizopolis</strong>! 🎉
-              </p>
-              <p style="font-size: 16px; line-height: 1.6;">
-                Please find attached your certificate of participation.
-              </p>
-              <p style="font-size: 14px; color: #666; margin-top: 30px;">
-                Warm regards,<br>
-                <strong>IIE Debate & Quiz Club</strong>
-              </p>
-            </div>
-          `,
-          attachments: [{ 
-            filename: "certificate.pdf", 
-            content: pdfBuffer,
-            contentType: 'application/pdf'
-          }],
-        });
-
-        // 45 second timeout for Vercel serverless functions
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Email timeout after 45s")), 45000)
-        );
-
-        await Promise.race([emailPromise, timeoutPromise]);
-        
-        emailSent = true;
-        console.log("✅ Certificate email sent successfully to:", email);
-      } catch (emailError) {
-        console.error("⚠️ Email failed (non-critical):", emailError.message);
-        console.error("Email error details:", emailError);
-        // Don't throw - email is optional, certificate was still generated
-      }
-    } else {
-      console.warn("⚠️ GMAIL_APP_PASSWORD not configured - skipping email");
+    try {
+      await sendCertificateEmail(name, email, pdfBuffer);
+      emailSent = true;
+      console.log("✅ Certificate email sent successfully to:", email);
+    } catch (emailError) {
+      console.error("⚠️ Email failed (non-critical):", emailError.message);
+      // Don't throw - email is optional, certificate was still generated
     }
 
     // Return success even if email failed (PDF was generated successfully)

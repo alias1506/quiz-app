@@ -20,7 +20,10 @@ app.use(express.json());
 // Environment variable validation
 if (!process.env.GMAIL_APP_PASSWORD) {
   console.warn("⚠️  WARNING: GMAIL_APP_PASSWORD not set - certificate emails will not be sent!");
+} else {
+  console.log("📧 Email configured: Gmail SMTP");
 }
+
 if (!process.env.MONGO_URI) {
   console.error("❌ ERROR: MONGO_URI not set!");
   process.exit(1);
