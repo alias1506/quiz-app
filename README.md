@@ -58,7 +58,12 @@ The Quiz Application is a comprehensive online examination platform designed for
 - ✅ Multiple-choice questions with 4 options
 - ✅ Real-time answer validation
 - ✅ Progress tracking throughout the quiz
-- ✅ Automatic submission on time limit (if implemented)
+- ✅ **Attempt Tracking System**:
+  - 3 attempts allowed per 24 hours
+  - Same-day attempts update existing record
+  - New entry created after 24 hours
+  - Attempt number increments for new sessions (#1, #2, #3...)
+  - Countdown timer shows time until next attempt reset
 
 #### Certificate Generation
 - ✅ Automatic PDF certificate creation for passing students
@@ -92,10 +97,10 @@ The Quiz Application is a comprehensive online examination platform designed for
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **React** | 19.1.1 | UI framework for building interactive interfaces |
-| **React Router** | ^6.x | Client-side routing and navigation |
-| **Vite** | ^5.4.11 | Fast build tool and development server |
-| **ESLint** | ^9.15.0 | Code linting and quality assurance |
-| **SweetAlert2** | Latest | Beautiful, responsive alert dialogs |
+| **React Router** | 7.1.1 | Client-side routing and navigation |
+| **Vite** | 5.4.11 | Fast build tool and development server |
+| **ESLint** | 9.15.0 | Code linting and quality assurance |
+| **SweetAlert2** | 11.x | Beautiful, responsive alert dialogs |
 
 ### Backend
 
@@ -149,12 +154,12 @@ quiz-app/
 │
 ├── backend/                  # Node.js backend application
 │   ├── routes/              # API route handlers
-│   │   ├── authRoute.js                 # Authentication routes
+│   │   ├── authRoute.js                 # User & attempt management
 │   │   ├── questionRoute.js             # Question management
 │   │   ├── setsRoute.js                 # Quiz set management
 │   │   └── certificateRoute.js          # Certificate generation
 │   ├── models/              # Mongoose schemas
-│   │   ├── authModel.js                 # User model
+│   │   ├── authModel.js                 # User model with attempt tracking
 │   │   ├── questionModel.js             # Question model
 │   │   └── setsModel.js                 # Quiz set model
 │   ├── controllers/         # Business logic

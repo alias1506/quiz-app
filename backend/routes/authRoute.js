@@ -206,7 +206,7 @@ router.post("/check-attempts", async (req, res) => {
 });
 
 // POST /api/users/record-attempt
-// Record a quiz attempt (creates new entry for each attempt)
+// Record a quiz attempt - updates existing entry within same day, creates new after 24h
 router.post("/record-attempt", async (req, res) => {
   try {
     const { name, email } = req.body || {};
@@ -223,68 +223,112 @@ router.post("/record-attempt", async (req, res) => {
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
     }).sort({ lastAttemptDate: -1 });
 
-    // Calculate total attempts across all time
-    const totalAttempts = await User.countDocuments({
-      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    });
-    const nextAttemptNumber = totalAttempts + 1;
-
     let dailyAttempts = 0;
+    let shouldCreateNew = false;
+    let attemptNumber = 1;
     
-    if (recentUser && recentUser.lastAttemptDate) {
-      const lastAttemptDate = new Date(recentUser.lastAttemptDate);
-      const lastAttemptDay = new Date(
-        lastAttemptDate.getFullYear(),
-        lastAttemptDate.getMonth(),
-        lastAttemptDate.getDate()
-      );
+    if (recentUser) {
+      // Calculate attempt number (total entries for this email)
+      const totalEntries = await User.countDocuments({
+        email: { $regex: `^${normalizedEmail}$`, $options: "i" },
+      });
+      attemptNumber = recentUser.attemptNumber || totalEntries;
 
-      if (lastAttemptDay.getTime() === today.getTime()) {
-        // Same day - use existing count
-        dailyAttempts = recentUser.dailyAttempts || 0;
+      if (recentUser.lastAttemptDate) {
+        const lastAttemptDate = new Date(recentUser.lastAttemptDate);
+        const lastAttemptDay = new Date(
+          lastAttemptDate.getFullYear(),
+          lastAttemptDate.getMonth(),
+          lastAttemptDate.getDate()
+        );
 
-        // Check if limit reached
-        if (dailyAttempts >= 3) {
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          const timeUntilReset = tomorrow.getTime() - now.getTime();
+        if (lastAttemptDay.getTime() === today.getTime()) {
+          // Same day - update existing entry
+          dailyAttempts = recentUser.dailyAttempts || 0;
 
-          return res.status(429).json({
-            success: false,
-            message: "Daily attempt limit reached",
+          // Check if limit reached
+          if (dailyAttempts >= 3) {
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const timeUntilReset = tomorrow.getTime() - now.getTime();
+
+            return res.status(429).json({
+              success: false,
+              message: "Daily attempt limit reached",
+              currentAttempts: dailyAttempts,
+              remainingAttempts: 0,
+              timeUntilReset,
+            });
+          }
+
+          // Increment daily attempts and update existing entry
+          dailyAttempts++;
+          recentUser.dailyAttempts = dailyAttempts;
+          recentUser.lastAttemptDate = now;
+          recentUser.name = name; // Update name in case it changed
+          await recentUser.save();
+
+          return res.status(200).json({
+            success: true,
+            message: "Attempt recorded successfully",
             currentAttempts: dailyAttempts,
-            remainingAttempts: 0,
-            timeUntilReset,
+            remainingAttempts: 3 - dailyAttempts,
+            user: {
+              name: recentUser.name,
+              email: recentUser.email,
+            },
           });
+        } else {
+          // Different day (24h+ passed) - create new entry
+          shouldCreateNew = true;
+          attemptNumber++;
+          dailyAttempts = 1; // Reset to 1 for new day
         }
+      } else {
+        // No lastAttemptDate - shouldn't happen, but handle it
+        shouldCreateNew = true;
+        attemptNumber++;
+        dailyAttempts = 1;
       }
+    } else {
+      // First time user - create new entry
+      shouldCreateNew = true;
+      attemptNumber = 1;
+      dailyAttempts = 1;
     }
 
-    // Create new entry for this attempt
-    dailyAttempts++;
-    const newUser = new User({
-      name: name,
-      email: normalizedEmail,
-      attemptNumber: nextAttemptNumber,
-      joinedOn: now,
-      dailyAttempts: dailyAttempts,
-      lastAttemptDate: now,
-    });
-    await newUser.save();
+    // Create new entry (first time user or after 24h)
+    if (shouldCreateNew) {
+      const newUser = new User({
+        name: name,
+        email: normalizedEmail,
+        attemptNumber: attemptNumber,
+        joinedOn: now,
+        dailyAttempts: dailyAttempts,
+        lastAttemptDate: now,
+      });
+      await newUser.save();
 
-    return res.status(201).json({
-      success: true,
-      message: "Attempt recorded successfully",
-      currentAttempts: dailyAttempts,
-      remainingAttempts: 3 - dailyAttempts,
-      user: {
-        name: newUser.name,
-        email: newUser.email,
-      },
-    });
+      return res.status(201).json({
+        success: true,
+        message: "Attempt recorded successfully",
+        currentAttempts: dailyAttempts,
+        remainingAttempts: 3 - dailyAttempts,
+        user: {
+          name: newUser.name,
+          email: newUser.email,
+        },
+      });
+    }
   } catch (err) {
     console.error("Record attempt error:", err);
-    return res.status(500).json({ message: "Error recording attempt" });
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    return res.status(500).json({ 
+      message: "Error recording attempt",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined
+    });
   }
 });
 

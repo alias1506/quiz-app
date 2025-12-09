@@ -10,43 +10,50 @@ export default function DevToolsDetector() {
     // Reset error state when on starting page
     if (location.pathname === "/") {
       setShowError(false);
+      return;
+    }
+
+    // Only apply security on dashboard page
+    if (location.pathname !== "/dashboard") {
+      return;
     }
 
     let devtoolsOpen = false;
 
-    // Check if devtools is already open (applies globally to all pages)
+    // Check if devtools is open (more reliable method)
     const checkDevTools = () => {
       const threshold = 160;
       const widthThreshold = window.outerWidth - window.innerWidth > threshold;
       const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      const orientation = widthThreshold ? 'vertical' : 'horizontal';
       
-      if (widthThreshold || heightThreshold) {
-        if (!devtoolsOpen) {
+      // Only trigger if threshold is significant (reduce false positives)
+      if ((widthThreshold || heightThreshold) && !devtoolsOpen) {
+        const sizeDiff = widthThreshold 
+          ? window.outerWidth - window.innerWidth 
+          : window.outerHeight - window.innerHeight;
+        
+        // Only trigger if difference is significant (more than threshold)
+        if (sizeDiff > threshold) {
           devtoolsOpen = true;
           setShowError(true);
         }
+      } else if (!widthThreshold && !heightThreshold && devtoolsOpen) {
+        // DevTools closed
+        devtoolsOpen = false;
       }
     };
 
-    // Check for tab visibility change (only on dashboard page)
+    // Check for tab visibility change
     const handleVisibilityChange = () => {
-      // Only check tab changes on dashboard
-      if (location.pathname === "/dashboard" && document.hidden) {
+      if (document.hidden) {
         setShowError(true);
       }
     };
 
-    // Check for window blur/tab change (only on dashboard page)
+    // Check for window blur
     const handleBlur = () => {
-      // Only check tab changes on dashboard
-      if (location.pathname === "/dashboard") {
-        setShowError(true);
-      }
-    };
-
-    // Check for resize (devtools opening/closing)
-    const handleResize = () => {
-      checkDevTools();
+      setShowError(true);
     };
 
     // Initial check
@@ -55,16 +62,16 @@ export default function DevToolsDetector() {
     // Add event listeners
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", checkDevTools);
 
-    // Periodic check for devtools
-    const interval = setInterval(checkDevTools, 1000);
+    // Periodic check for devtools (every 500ms)
+    const interval = setInterval(checkDevTools, 500);
 
     // Cleanup
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", checkDevTools);
       clearInterval(interval);
     };
   }, [setShowError, location.pathname]);
