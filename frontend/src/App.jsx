@@ -6,14 +6,12 @@ import BlockIfLoggedIn from "./components/BlockIfLoggedIn";
 import ThankYou from "./pages/ThankYou";
 import ThankYouGuard from "./components/ThankYouGuard";
 import NotFound from "./pages/NotFound";
-import DevToolsDetector from "./components/DevToolsDetector";
 import { SecurityProvider } from "./contexts/SecurityContext";
 
 function App() {
   return (
     <BrowserRouter>
       <SecurityProvider>
-        <DevToolsDetector />
         <Routes>
         <Route
           path="/"

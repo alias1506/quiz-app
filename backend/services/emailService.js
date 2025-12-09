@@ -14,17 +14,19 @@ async function sendWithNodemailer(options) {
   
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: "iiedebateandquizclub@gmail.com",
         pass: process.env.GMAIL_APP_PASSWORD,
       },
-      tls: {
-        rejectUnauthorized: false
-      }
+      connectionTimeout: 60000,
+      socketTimeout: 60000,
+      greetingTimeout: 30000,
     });
 
-    await transporter.sendMail({
+    const sendPromise = transporter.sendMail({
       from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
       to: to,
       subject: subject,
@@ -32,6 +34,14 @@ async function sendWithNodemailer(options) {
       html: html,
       attachments: attachments,
     });
+
+    // Add timeout wrapper
+    await Promise.race([
+      sendPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Email send timeout")), 50000)
+      )
+    ]);
     
     console.log("✅ Email sent via Nodemailer (SMTP)");
     return true;
