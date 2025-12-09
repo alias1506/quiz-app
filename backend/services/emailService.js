@@ -14,25 +14,17 @@ async function sendWithNodemailer(options) {
   
   try {
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
+      service: "gmail",
       auth: {
         user: "iiedebateandquizclub@gmail.com",
         pass: process.env.GMAIL_APP_PASSWORD,
       },
       tls: {
-        rejectUnauthorized: false,
-        minVersion: 'TLSv1.2'
-      },
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
-      socketTimeout: 30000,
-      pool: false,
-      maxConnections: 1,
+        rejectUnauthorized: false
+      }
     });
 
-    const emailPromise = transporter.sendMail({
+    await transporter.sendMail({
       from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
       to: to,
       subject: subject,
@@ -40,12 +32,6 @@ async function sendWithNodemailer(options) {
       html: html,
       attachments: attachments,
     });
-
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("SMTP timeout after 45s")), 45000)
-    );
-
-    await Promise.race([emailPromise, timeoutPromise]);
     
     console.log("✅ Email sent via Nodemailer (SMTP)");
     return true;
@@ -112,12 +98,6 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
         <p style="font-size: 16px; line-height: 1.6; color: #374151;">
           Your certificate of participation is attached to this email. We're proud of your achievement!
         </p>
-        
-        <div style="background-color: #f3f4f6; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0; font-size: 14px; color: #6b7280;">
-            <strong>📎 Attachment:</strong> certificate.pdf
-          </p>
-        </div>
         
         <p style="font-size: 16px; line-height: 1.6; color: #374151;">
           Keep learning and stay curious! We hope to see you at our next event.
