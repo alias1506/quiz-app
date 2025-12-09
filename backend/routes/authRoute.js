@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/authModel");
 
-// GET /api/users
-// Get all users
 router.get("/", async (req, res) => {
   try {
     const users = await User.find().sort({ joinedOn: -1 });
@@ -14,8 +12,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST /api/users/check-email
-// Check daily attempt limit for email
 router.post("/check-email", async (req, res) => {
   try {
     const { email } = req.body || {};
@@ -27,7 +23,7 @@ router.post("/check-email", async (req, res) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Find most recent entry for this email
+
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
     }).sort({ lastAttemptDate: -1 });
@@ -41,7 +37,7 @@ router.post("/check-email", async (req, res) => {
       });
     }
 
-    // Check if last attempt was today
+
     let dailyAttempts = 0;
     if (recentUser.lastAttemptDate) {
       const lastAttemptDate = new Date(recentUser.lastAttemptDate);
@@ -72,11 +68,9 @@ router.post("/check-email", async (req, res) => {
   }
 });
 
-// POST /api/users
-// Add one or multiple users
 router.post("/", async (req, res) => {
   try {
-    // Accepts: a single object, an array, or { data: [...] }
+
     let usersData = [];
     if (Array.isArray(req.body)) {
       usersData = req.body;
@@ -86,13 +80,13 @@ router.post("/", async (req, res) => {
       usersData = [req.body];
     }
 
-    // Basic validation
+
     const validUsers = usersData.filter((u) => u && u.name && u.email);
     if (validUsers.length === 0) {
       return res.status(400).json({ message: "Name and email are required" });
     }
 
-    // Prepare documents
+
     const usersToInsert = validUsers.map((user) => ({
       name: user.name,
       email: String(user.email).toLowerCase().trim(),
@@ -102,10 +96,10 @@ router.post("/", async (req, res) => {
       joinedOn: user.joinedOn ? new Date(user.joinedOn) : new Date(),
     }));
 
-    // Insert
+
     const savedUsers = await User.insertMany(usersToInsert, { ordered: false });
 
-    // Return consistent response shape for the caller expecting `success`
+
     return res.status(201).json({
       success: true,
       users: savedUsers,
@@ -113,7 +107,7 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("Add users error:", err);
 
-    // Handle Mongo duplicate key error (if a unique index exists on email)
+
     if (err.code === 11000 && err.keyPattern?.email) {
       return res.status(409).json({ message: "Email already used" });
     }
@@ -122,8 +116,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE /api/users/:id
-// Delete a user
 router.delete("/:id", async (req, res) => {
   try {
     const deleted = await User.findByIdAndDelete(req.params.id);
@@ -138,8 +130,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// POST /api/users/check-attempts
-// Check if user can attempt quiz (max 3 per day)
 router.post("/check-attempts", async (req, res) => {
   try {
     const { email } = req.body || {};
@@ -158,8 +148,8 @@ router.post("/check-attempts", async (req, res) => {
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Check if last attempt was today
+
+
     let dailyAttempts = 0;
     let timeUntilReset = 0;
 
@@ -172,15 +162,15 @@ router.post("/check-attempts", async (req, res) => {
       );
 
       if (lastAttemptDay.getTime() === today.getTime()) {
-        // Same day - use existing count
+
         dailyAttempts = user.dailyAttempts || 0;
-        
-        // Calculate time until midnight
+
+
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         timeUntilReset = tomorrow.getTime() - now.getTime();
       } else {
-        // Different day - reset count
+
         dailyAttempts = 0;
       }
     }
@@ -205,8 +195,6 @@ router.post("/check-attempts", async (req, res) => {
   }
 });
 
-// POST /api/users/record-attempt
-// Record a quiz attempt - updates existing entry within same day, creates new after 24h
 router.post("/record-attempt", async (req, res) => {
   try {
     const { name, email } = req.body || {};
@@ -220,7 +208,7 @@ router.post("/record-attempt", async (req, res) => {
 
     console.log(`🔍 Recording attempt for: ${normalizedEmail}`);
 
-    // Find most recent entry for this email (sort by createdAt instead of lastAttemptDate for more reliable ordering)
+
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
     }).sort({ createdAt: -1, _id: -1 });
@@ -228,9 +216,9 @@ router.post("/record-attempt", async (req, res) => {
     let dailyAttempts = 0;
     let shouldCreateNew = false;
     let attemptNumber = 1;
-    
+
     if (recentUser) {
-      // Calculate attempt number (total entries for this email)
+
       const totalEntries = await User.countDocuments({
         email: { $regex: `^${normalizedEmail}$`, $options: "i" },
       });
@@ -245,12 +233,12 @@ router.post("/record-attempt", async (req, res) => {
         );
 
         if (lastAttemptDay.getTime() === today.getTime()) {
-          // Same day - update existing entry
+
           dailyAttempts = recentUser.dailyAttempts || 0;
 
           console.log(`✏️ Same day attempt - Current: ${dailyAttempts}, Updating existing record ID: ${recentUser._id}`);
 
-          // Check if limit reached
+
           if (dailyAttempts >= 3) {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -267,11 +255,11 @@ router.post("/record-attempt", async (req, res) => {
             });
           }
 
-          // Increment daily attempts and update existing entry
+
           dailyAttempts++;
           recentUser.dailyAttempts = dailyAttempts;
           recentUser.lastAttemptDate = now;
-          recentUser.name = name; // Update name in case it changed
+          recentUser.name = name;
           await recentUser.save();
 
           console.log(`✅ Updated existing record - Attempts: ${dailyAttempts}/3`);
@@ -287,30 +275,30 @@ router.post("/record-attempt", async (req, res) => {
             },
           });
         } else {
-          // Different day (24h+ passed) - create new entry
+
           console.log(`📅 Different day detected - Creating new entry`);
           shouldCreateNew = true;
           attemptNumber++;
-          dailyAttempts = 1; // Reset to 1 for new day
+          dailyAttempts = 1;
         }
       } else {
-        // No lastAttemptDate - shouldn't happen, but handle it
+
         shouldCreateNew = true;
         attemptNumber++;
         dailyAttempts = 1;
       }
     } else {
-      // First time user - create new entry
+
       console.log(`🆕 First time user - Creating initial entry`);
       shouldCreateNew = true;
       attemptNumber = 1;
       dailyAttempts = 1;
     }
 
-    // Create new entry (first time user or after 24h)
+
     if (shouldCreateNew) {
       console.log(`➕ Creating new entry - Attempt #${attemptNumber}, Daily: ${dailyAttempts}/3`);
-      
+
       const newUser = new User({
         name: name,
         email: normalizedEmail,
@@ -339,15 +327,13 @@ router.post("/record-attempt", async (req, res) => {
     console.error("Error name:", err.name);
     console.error("Error message:", err.message);
     console.error("Error stack:", err.stack);
-    return res.status(500).json({ 
+    return res.status(500).json({
       message: "Error recording attempt",
       error: process.env.NODE_ENV === "development" ? err.message : undefined
     });
   }
 });
 
-// POST /api/users/update-score
-// Update score for the most recent attempt
 router.post("/update-score", async (req, res) => {
   try {
     const { email, score, total, quizName } = req.body || {};
@@ -357,7 +343,7 @@ router.post("/update-score", async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Find most recent entry for this email
+
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
     }).sort({ lastAttemptDate: -1 });
@@ -366,7 +352,7 @@ router.post("/update-score", async (req, res) => {
       return res.status(404).json({ message: "No attempt found for this email" });
     }
 
-    // Update the score and quiz details
+
     recentUser.score = score;
     recentUser.total = total;
     if (quizName) {

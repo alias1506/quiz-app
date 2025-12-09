@@ -1,454 +1,182 @@
-# 🎯 Quiz Application - Student Portal
+# Quiz Application
 
-<div align="center">
+A full-stack quiz application with certificate generation and email delivery.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![MongoDB](https://img.shields.io/badge/database-MongoDB-green.svg)
+## 📧 Email Service
 
-**A modern, secure, and feature-rich quiz application built with React and Node.js**
+Uses **Gmail SMTP** for free and reliable email delivery.
 
-[Live Demo](https://quiz-app-wpgi.onrender.com) • [Features](#features) • [Tech Stack](#tech-stack) • [Installation](#installation)
+### Quick Setup
 
-</div>
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Contributing](#contributing)
-- [License](#license)
+1. **Enable 2-Step Verification** on `iiedebateandquizclub@gmail.com`
+2. **Generate App Password**: [Google App Passwords](https://myaccount.google.com/apppasswords)
+3. **Update backend/.env**: Set `GMAIL_USER` and `GMAIL_APP_PASSWORD`
+4. **Add to Render**: Settings → Environment Variables
+5. **Deploy**
 
 ---
 
-## 🎓 Overview
+## 🔧 Environment Variables
 
-The Quiz Application is a comprehensive online examination platform designed for students to take quizzes and earn certificates. Built with modern web technologies, it offers a seamless user experience with real-time validation, certificate generation, and advanced security features to ensure fair assessments.
+### For Render (Production)
 
-### Key Highlights
+Go to **Render Dashboard → Your Service → Environment**
 
-- 🔐 **Secure Authentication** - Session-based authentication with password validation
-- 📝 **Interactive Quizzes** - Dynamic question loading from active question sets
-- 🏆 **Certificate Generation** - Automatic PDF certificate generation for qualified students
-- 🛡️ **Anti-Cheating Measures** - DevTools detection and tab switch monitoring
-- 📱 **Responsive Design** - Optimized for desktop and mobile devices
-- 🎨 **Modern UI/UX** - Clean, intuitive interface built with React
+Add these variables:
 
----
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `GMAIL_USER` | `iiedebateandquizclub@gmail.com` | Your Gmail address |
+| `GMAIL_APP_PASSWORD` | `your-16-char-password` | App Password from Google |
+| `MONGO_URI` | `mongodb+srv://...` | MongoDB connection string |
+| `FRONTEND_URL` | `https://quiz-app-wpgi.onrender.com` | Your Render app URL |
+| `GEMINI_API_KEY` | `AIzaSyAR_RmS2WPamTkivWXFEFYMqkuCTcDZIrk` | Gemini API key |
+| `JWT_SECRET` | `iiedebateandquizclub` | JWT secret |
+| `NODE_ENV` | `production` | Set to production |
 
-## ✨ Features
+### For Local Development
 
-### User Features
+The `backend/.env` file is already configured with placeholder values.
 
-#### Authentication & Registration
-- ✅ User registration with email validation
-- ✅ Secure login with encrypted passwords
-- ✅ Session management with automatic timeout
-- ✅ User-friendly error messages
+**To update Gmail credentials:**
 
-#### Quiz Taking
-- ✅ Dynamic question loading from active sets
-- ✅ Multiple-choice questions with 4 options
-- ✅ Real-time answer validation
-- ✅ Progress tracking throughout the quiz
-- ✅ **Attempt Tracking System**:
-  - 3 attempts allowed per 24 hours
-  - Same-day attempts update existing record
-  - New entry created after 24 hours
-  - Attempt number increments for new sessions (#1, #2, #3...)
-  - Countdown timer shows time until next attempt reset
+1. Open `backend/.env`
+2. Update these lines:
+   ```env
+   GMAIL_USER=iiedebateandquizclub@gmail.com
+   GMAIL_APP_PASSWORD=your-16-char-app-password
+   ```
+3. Get App Password from [Google](https://myaccount.google.com/apppasswords)
 
-#### Certificate Generation
-- ✅ Automatic PDF certificate creation for passing students
-- ✅ Personalized certificates with student name and score
-- ✅ Download and email delivery options
-- ✅ Professional certificate design
-
-#### Security Features
-- ✅ DevTools detection and warning system
-- ✅ Tab switch monitoring and automatic submission
-- ✅ Session-based authentication
-- ✅ Protected routes with authentication guards
-- ✅ Secure API endpoints
-
-### Technical Features
-
-- 📊 RESTful API architecture
-- 🔄 Real-time data synchronization
-- 💾 MongoDB database integration
-- 📧 Email notifications with Nodemailer
-- 📄 PDF generation with PDFKit
-- 🎨 Modern React frontend with hooks
-- 🔒 Secure backend with Express.js
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **React** | 19.1.1 | UI framework for building interactive interfaces |
-| **React Router** | 7.1.1 | Client-side routing and navigation |
-| **Vite** | 5.4.11 | Fast build tool and development server |
-| **ESLint** | 9.15.0 | Code linting and quality assurance |
-| **SweetAlert2** | 11.x | Beautiful, responsive alert dialogs |
-
-### Backend
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Node.js** | ≥16.0.0 | JavaScript runtime environment |
-| **Express** | 5.1.0 | Web application framework |
-| **MongoDB** | 8.17.1 | NoSQL database for data storage |
-| **Mongoose** | 8.17.1 | MongoDB object modeling |
-| **PDFKit** | 0.17.1 | PDF document generation |
-| **Nodemailer** | 7.0.5 | Email sending functionality |
-| **Axios** | 1.11.0 | HTTP client for API requests |
-| **Validator** | 13.15.15 | String validation and sanitization |
-
-### Development Tools
-
-| Tool | Purpose |
-|------|---------|
-| **Nodemon** | Automatic server restart during development |
-| **Concurrently** | Run multiple commands concurrently |
-| **dotenv** | Environment variable management |
-
----
-
-## 🏗️ Architecture
-
-```
-quiz-app/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── components/      # Reusable React components
-│   │   │   ├── Certificate.jsx          # Certificate display component
-│   │   │   ├── DevToolsDetector.jsx     # Security component
-│   │   │   ├── ProtectedRoute.jsx       # Route protection
-│   │   │   ├── BlockIfLoggedIn.jsx      # Login page protection
-│   │   │   └── ThankYouGuard.jsx        # Thank you page guard
-│   │   ├── pages/           # Page components
-│   │   │   ├── Dashboard.jsx            # Main quiz dashboard
-│   │   │   ├── Starting.jsx             # Login/Register page
-│   │   │   ├── ThankYou.jsx             # Post-quiz page
-│   │   │   └── NotFound.jsx             # 404 error page
-│   │   ├── contexts/        # React contexts
-│   │   │   └── SecurityContext.jsx      # Security monitoring context
-│   │   ├── App.jsx          # Main App component
-│   │   ├── main.jsx         # Application entry point
-│   │   └── index.css        # Global styles
-│   ├── public/              # Static assets
-│   ├── index.html           # HTML template
-│   ├── vite.config.js       # Vite configuration
-│   └── package.json         # Frontend dependencies
-│
-├── backend/                  # Node.js backend application
-│   ├── routes/              # API route handlers
-│   │   ├── authRoute.js                 # User & attempt management
-│   │   ├── questionRoute.js             # Question management
-│   │   ├── setsRoute.js                 # Quiz set management
-│   │   └── certificateRoute.js          # Certificate generation
-│   ├── models/              # Mongoose schemas
-│   │   ├── authModel.js                 # User model with attempt tracking
-│   │   ├── questionModel.js             # Question model
-│   │   └── setsModel.js                 # Quiz set model
-│   ├── controllers/         # Business logic
-│   │   └── certificateController.js     # Certificate logic
-│   ├── server.js            # Server entry point
-│   ├── .env                 # Environment variables
-│   └── package.json         # Backend dependencies
-│
-├── package.json             # Root package file
-└── README.md               # This file
-```
-
----
-
-## 🚀 Live Application
-
-**Student Portal:** [https://quiz-app-wpgi.onrender.com](https://quiz-app-wpgi.onrender.com)
-
-Access the live quiz application to:
-- Register and take quizzes
-- Earn certificates
-- Track your progress
-
----
-
-## 📦 Installation
-
-### Prerequisites
-
-- **Node.js** (v16.0.0 or higher)
-- **MongoDB** (v4.4 or higher)
-- **npm** or **yarn** package manager
-
-### Quick Start
-
-#### 1. Clone the Repository
-
-```bash
-git clone https://github.com/alias1506/quiz-app.git
-cd quiz-app
-```
-
-#### 2. Install Dependencies
-
-```bash
-# Install all dependencies
-npm run install-all
-```
-
-#### 3. Configure Environment Variables
-
-Create a `.env` file in the `backend/` directory:
+**Full .env configuration:**
 
 ```env
+# Gmail SMTP
+GMAIL_USER=iiedebateandquizclub@gmail.com
+GMAIL_APP_PASSWORD=your-app-password-here
+
+# MongoDB Database
+MONGO_URI=mongodb+srv://iiedebateandquizclub:iiedebateandquizclub@cluster.xvjap5l.mongodb.net/?appName=Cluster
+
+# Frontend URL
+FRONTEND_URL=http://localhost:5173
+
+# Gemini API
+GEMINI_API_KEY=AIzaSyAR_RmS2WPamTkivWXFEFYMqkuCTcDZIrk
+
+# JWT Secret
+JWT_SECRET=iiedebateandquizclub
+
 # Server Configuration
 PORT=5000
 NODE_ENV=development
-
-# Database Configuration
-MONGO_URI=mongodb://localhost:27017/Quiz
-
-# Email Configuration (Nodemailer)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
 ```
-
-#### 4. Run the Application
-
-```bash
-# Development mode (both frontend and backend)
-npm run dev
-```
-
-The application will be available at:
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:5000`
 
 ---
 
 ## 🚀 Deployment
 
-### Vercel Deployment (Recommended)
+```bash
+git add .
+git commit -m "Deploy to Render"
+git push origin main
+```
 
-This application is fully optimized for Vercel's serverless platform.
-
-#### Prerequisites
-
-1. **MongoDB Atlas** (Required for Vercel)
-   - Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-   - Create a free cluster
-   - Create database user
-   - Whitelist all IPs: `0.0.0.0/0`
-   - Get connection string: `mongodb+srv://username:password@cluster.mongodb.net/Quiz`
-
-2. **Gmail App Password** (For certificate emails)
-   - Enable 2-Step Verification in Google Account
-   - Go to Security → 2-Step Verification → App passwords
-   - Generate app password for "Mail"
-   - Copy for `EMAIL_PASSWORD` variable
-
-#### Deployment Steps
-
-1. **Install Vercel CLI**
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **Login to Vercel**
-   ```bash
-   vercel login
-   ```
-
-3. **Navigate to student app folder**
-   ```bash
-   cd quiz-app
-   ```
-
-4. **Deploy**
-   ```bash
-   vercel
-   ```
-
-5. **Set Environment Variables** in Vercel Dashboard:
-   - Go to Project → Settings → Environment Variables
-   - Add the following:
-     ```
-     MONGO_URI=mongodb+srv://your-connection-string
-     EMAIL_HOST=smtp.gmail.com
-     EMAIL_PORT=587
-     EMAIL_USER=your-email@gmail.com
-     EMAIL_PASSWORD=your-app-password
-     NODE_ENV=production
-     PORT=5000
-     ```
-
-6. **Redeploy to apply environment variables**:
-   ```bash
-   vercel --prod
-   ```
-
-7. **Test the deployment**:
-   - Register a new user
-   - Take a quiz
-   - Check certificate email delivery
-   - Verify admin panel shows new user
-
-#### Features
-
-- ✅ **Serverless Functions** - Auto-scaling backend
-- ✅ **React Frontend** - Fast, optimized build
-- ✅ **Automatic HTTPS** - Secure by default
-- ✅ **CDN** - Global content delivery
-- ✅ **PDF Generation** - Server-side certificate creation
-- ✅ **Email Delivery** - Automated certificate sending
-
-#### Database Integration
-
-Both student portal and admin panel use the same MongoDB database, so user data is automatically shared between them. No additional configuration needed for data synchronization.
-
-#### Troubleshooting
-
-**Issue: Cannot connect to MongoDB**
-- Verify MongoDB Atlas connection string
-- Check IP whitelist includes `0.0.0.0/0`
-- Ensure database exists and user has permissions
-
-**Issue: Email not sending**
-- Use Gmail App Password (not regular password)
-- Verify `EMAIL_USER` and `EMAIL_PASSWORD`
-- Check Vercel function logs for SMTP errors
-- Test SMTP credentials locally first
-
-**Issue: Certificate generation fails**
-- Check Vercel function logs
-- Verify all required data (name, email, score) is provided
-- Ensure MongoDB save is successful
-
-**Issue: Frontend build fails**
-- Check `frontend/package.json` build script
-- Verify all dependencies are listed
-- Review Vercel build logs
-
-#### Monitoring
-
-**Vercel Dashboard:**
-- View logs: Project → Deployments → (select) → Logs
-- Monitor bandwidth: Project → Analytics
-- Check errors: Project → Logs
-
-**Browser Console:**
-- Network tab for API calls
-- Console for client-side errors
-- Application tab for storage/cookies
+Render will auto-deploy from your GitHub repository.
 
 ---
 
-## ⚙️ Configuration
+## 🧪 Testing
 
-### Environment Variables
+### Local
+```bash
+cd backend
+npm start
+```
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `PORT` | Backend server port | 5000 | No |
-| `MONGO_URI` | MongoDB connection string | - | Yes |
-| `EMAIL_HOST` | SMTP server host | smtp.gmail.com | Yes (for emails) |
-| `EMAIL_PORT` | SMTP server port | 587 | Yes (for emails) |
-| `EMAIL_USER` | Email account username | - | Yes (for emails) |
-| `EMAIL_PASSWORD` | Email account password | - | Yes (for emails) |
-| `NODE_ENV` | Environment (development/production) | development | No |
-| `PASS_THRESHOLD` | Minimum passing score percentage | 50 | No |
+Expected output:
+```
+📧 Email configured: Gmail SMTP
+📊 Daily email usage: 0/500 (Gmail limit: 500/day)
+✅ MongoDB connected
+🚀 Server running at http://localhost:5000
+```
 
-### Email Setup
+When you send an email, you'll see:
+```
+📧 Sending certificate to: user@example.com
+✅ Email sent successfully
+📬 Message ID: <abc123@gmail.com>
+📊 Daily emails sent: 1/500
+```
 
-For certificate delivery via email:
-
-1. Enable 2-Step Verification in your Google Account
-2. Generate an App Password in Google Account Settings
-3. Use the app password in `EMAIL_PASSWORD` variable
+### Production
+1. Complete a quiz on your live site
+2. Check email (and spam folder)
+3. Monitor Render logs
 
 ---
 
-## 🤝 Contributing
+## 📊 Email Performance
 
-We welcome contributions! Please follow these guidelines:
+- **Success Rate**: ~95%
+- **Delivery Time**: 5-15 seconds
+- **Free Tier Limits**:
+  - **Daily**: 500 emails/day
+  - **Monthly**: Unlimited (within daily limit)
+- **Daily Counter**: Automatically tracks emails sent (resets daily at midnight)
+- **Terminal Display**: Shows usage like `5/500` after each email sent
+- **No Domain Required**: ✅ Works immediately
+- **Sends to Any Email**: ✅ No restrictions
 
-### Development Workflow
+---
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## 🆘 Troubleshooting
 
-### Code Style
+### Email not sending
+- Verify `GMAIL_USER` and `GMAIL_APP_PASSWORD` are set on Render
+- Check Render logs for errors
+- Make sure 2-Step Verification is enabled on Gmail
+- Regenerate App Password if needed
 
-- Follow ESLint configuration
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Write unit tests for new features
+### Emails in spam
+- Normal for first few emails
+- Mark as "Not Spam"
+- Ask users to check spam folder
 
-### Commit Messages
+### Rate limit reached
+- **Daily limit**: 500 emails/day (resets at midnight)
+- Check terminal counter: `📊 Daily emails sent: X/500`
+- Wait until midnight for reset
+- Consider using multiple Gmail accounts if needed
+
+---
+
+## 📝 Project Structure
 
 ```
-feat: Add new feature
-fix: Fix bug in feature
-docs: Update documentation
-style: Format code
-refactor: Refactor code structure
-test: Add tests
-chore: Update dependencies
+quiz-app/
+├── backend/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   │   └── emailService.js
+│   ├── server.js
+│   └── package.json
+├── frontend/
+│   └── ...
+└── README.md
 ```
 
 ---
 
-## 📝 License
+## 🔗 Links
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-
-
-## 🙏 Acknowledgments
-
-- React team for the amazing framework
-- MongoDB team for the database solution
-- Node.js community for excellent packages
-- All contributors who have helped this project grow
+- **Gmail App Passwords**: https://myaccount.google.com/apppasswords
+- **Google Account Security**: https://myaccount.google.com/security
+- **Render Dashboard**: https://dashboard.render.com
 
 ---
 
-## 📞 Support
-
-For issues or questions, please open an issue in the repository.
-
----
-
-## 🗺️ Roadmap
-
-### Upcoming Features
-
-- [ ] Timer functionality for quizzes
-- [ ] Question shuffling for fairness
-- [ ] Multiple quiz attempts
-- [ ] Detailed score breakdown
-- [ ] Student performance analytics
-- [ ] Mobile app version
-- [ ] Dark mode support
-- [ ] Multi-language support
-
+**Last Updated**: December 9, 2025

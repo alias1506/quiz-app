@@ -3,13 +3,11 @@ const router = express.Router();
 const Question = require("../models/questionModel");
 const QuizSet = require("../models/setsModel"); // Import the Sets model
 
-// @route   GET /api/questions
-// @desc    Get all questions with set info (active and inactive sets)
 router.get("/", async (req, res) => {
   try {
     const questions = await Question.find().sort({ createdAt: -1 });
 
-    // Manually populate set information
+
     const populatedQuestions = [];
     for (const question of questions) {
       const setInfo = await QuizSet.findOne({ name: question.set });
@@ -17,10 +15,10 @@ router.get("/", async (req, res) => {
         ...question.toObject(),
         set: setInfo
           ? {
-              _id: setInfo._id,
-              name: setInfo.name,
-              isActive: setInfo.isActive,
-            }
+            _id: setInfo._id,
+            name: setInfo.name,
+            isActive: setInfo.isActive,
+          }
           : null,
       });
     }
@@ -31,32 +29,30 @@ router.get("/", async (req, res) => {
   }
 });
 
-// @route   GET /api/questions/by-set/:setId
-// @desc    Get questions by set ID
 router.get("/by-set/:setId", async (req, res) => {
   try {
     const { setId } = req.params;
     const { includeInactive } = req.query;
 
-    // Find the set first to get its name
+
     const targetSet = await QuizSet.findById(setId);
     if (!targetSet) {
       return res.status(404).json({ message: "Set not found" });
     }
 
-    // Find questions by set name
+
     const questions = await Question.find({ set: targetSet.name }).sort({
       createdAt: -1,
     });
 
-    // Filter based on active status if needed
+
     if (!includeInactive || includeInactive === "false") {
       if (!targetSet.isActive) {
-        return res.json([]); // Return empty array for inactive sets
+        return res.json([]);
       }
     }
 
-    // Populate set information
+
     const populatedQuestions = questions.map((question) => ({
       ...question.toObject(),
       set: {
@@ -73,12 +69,10 @@ router.get("/by-set/:setId", async (req, res) => {
   }
 });
 
-// @route   POST /api/questions
-// @desc    Add one or multiple questions
 router.post("/", async (req, res) => {
   try {
     if (Array.isArray(req.body)) {
-      // Bulk insert - convert set IDs to set names
+
       const questionsToSave = [];
 
       for (const q of req.body) {
@@ -101,10 +95,10 @@ router.post("/", async (req, res) => {
           });
         }
 
-        // Convert set ID to set name if needed
+
         let setName = q.set;
         if (q.set.length === 24 && /^[0-9a-fA-F]{24}$/.test(q.set)) {
-          // It's an ObjectId, convert to name
+
           const foundSet = await QuizSet.findById(q.set);
           if (!foundSet) {
             return res.status(400).json({
@@ -113,7 +107,7 @@ router.post("/", async (req, res) => {
           }
           setName = foundSet.name;
         } else {
-          // It's already a name, verify it exists
+
           const foundSet = await QuizSet.findOne({ name: q.set });
           if (!foundSet) {
             return res.status(400).json({
@@ -134,7 +128,7 @@ router.post("/", async (req, res) => {
         ordered: false,
       });
 
-      // Manually populate the saved questions
+
       const populatedQuestions = [];
       for (const savedQuestion of saved) {
         const setInfo = await QuizSet.findOne({ name: savedQuestion.set });
@@ -142,10 +136,10 @@ router.post("/", async (req, res) => {
           ...savedQuestion.toObject(),
           set: setInfo
             ? {
-                _id: setInfo._id,
-                name: setInfo.name,
-                isActive: setInfo.isActive,
-              }
+              _id: setInfo._id,
+              name: setInfo.name,
+              isActive: setInfo.isActive,
+            }
             : null,
         });
       }
@@ -155,7 +149,7 @@ router.post("/", async (req, res) => {
         questions: populatedQuestions,
       });
     } else {
-      // Single insert
+
       const { question, options, correctAnswer, set } = req.body;
 
       if (!question || !options || !correctAnswer || !set) {
@@ -176,10 +170,10 @@ router.post("/", async (req, res) => {
           .json({ message: "Correct answer must be one of the options" });
       }
 
-      // Convert set ID to set name if needed
+
       let setName = set;
       if (set.length === 24 && /^[0-9a-fA-F]{24}$/.test(set)) {
-        // It's an ObjectId, convert to name
+
         const foundSet = await QuizSet.findById(set);
         if (!foundSet) {
           return res.status(400).json({
@@ -188,7 +182,7 @@ router.post("/", async (req, res) => {
         }
         setName = foundSet.name;
       } else {
-        // It's already a name, verify it exists
+
         const foundSet = await QuizSet.findOne({ name: set });
         if (!foundSet) {
           return res.status(400).json({
@@ -206,16 +200,16 @@ router.post("/", async (req, res) => {
 
       const saved = await newQuestion.save();
 
-      // Manually populate the saved question
+
       const setInfo = await QuizSet.findOne({ name: saved.set });
       const populatedQuestion = {
         ...saved.toObject(),
         set: setInfo
           ? {
-              _id: setInfo._id,
-              name: setInfo.name,
-              isActive: setInfo.isActive,
-            }
+            _id: setInfo._id,
+            name: setInfo.name,
+            isActive: setInfo.isActive,
+          }
           : null,
       };
 
@@ -232,8 +226,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// @route   PUT /api/questions/:id
-// @desc    Edit a question
 router.put("/:id", async (req, res) => {
   const { question, options, correctAnswer, set } = req.body;
 
@@ -256,10 +248,10 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    // Convert set ID to set name if needed
+
     let setName = set;
     if (set.length === 24 && /^[0-9a-fA-F]{24}$/.test(set)) {
-      // It's an ObjectId, convert to name
+
       const foundSet = await QuizSet.findById(set);
       if (!foundSet) {
         return res.status(400).json({
@@ -268,7 +260,7 @@ router.put("/:id", async (req, res) => {
       }
       setName = foundSet.name;
     } else {
-      // It's already a name, verify it exists
+
       const foundSet = await QuizSet.findOne({ name: set });
       if (!foundSet) {
         return res.status(400).json({
@@ -287,16 +279,16 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ message: "Question not found" });
     }
 
-    // Manually populate the updated question
+
     const setInfo = await QuizSet.findOne({ name: updated.set });
     const populatedQuestion = {
       ...updated.toObject(),
       set: setInfo
         ? {
-            _id: setInfo._id,
-            name: setInfo.name,
-            isActive: setInfo.isActive,
-          }
+          _id: setInfo._id,
+          name: setInfo.name,
+          isActive: setInfo.isActive,
+        }
         : null,
     };
 
@@ -309,8 +301,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// @route   PUT /api/questions/:id/toggle-set-status
-// @desc    Toggle the active status of the set associated with a question
 router.put("/:id/toggle-set-status", async (req, res) => {
   try {
     const question = await Question.findById(req.params.id);
@@ -325,7 +315,7 @@ router.put("/:id/toggle-set-status", async (req, res) => {
         .json({ message: "Question has no associated set" });
     }
 
-    // Find set by name and toggle its status
+
     const setInfo = await QuizSet.findOne({ name: question.set });
     if (!setInfo) {
       return res.status(400).json({ message: "Associated set not found" });
@@ -337,7 +327,7 @@ router.put("/:id/toggle-set-status", async (req, res) => {
       { new: true }
     );
 
-    // Return updated question with set info
+
     const populatedQuestion = {
       ...question.toObject(),
       set: {
@@ -360,8 +350,6 @@ router.put("/:id/toggle-set-status", async (req, res) => {
   }
 });
 
-// @route   DELETE /api/questions/:id
-// @desc    Delete a question
 router.delete("/:id", async (req, res) => {
   try {
     const deleted = await Question.findByIdAndDelete(req.params.id);
@@ -370,16 +358,16 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Question not found" });
     }
 
-    // Manually populate the deleted question
+
     const setInfo = await QuizSet.findOne({ name: deleted.set });
     const populatedQuestion = {
       ...deleted.toObject(),
       set: setInfo
         ? {
-            _id: setInfo._id,
-            name: setInfo.name,
-            isActive: setInfo.isActive,
-          }
+          _id: setInfo._id,
+          name: setInfo.name,
+          isActive: setInfo.isActive,
+        }
         : null,
     };
 
@@ -392,13 +380,11 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// @route   DELETE /api/questions/by-set/:setId
-// @desc    Delete all questions belonging to a specific set
 router.delete("/by-set/:setId", async (req, res) => {
   try {
     const { setId } = req.params;
 
-    // Find the set to get its name
+
     const targetSet = await QuizSet.findById(setId);
     if (!targetSet) {
       return res.status(404).json({ message: "Set not found" });

@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const Set = require("../models/setsModel");
 
-// @route   GET /api/sets
-// @desc    Get all sets
 router.get("/", async (req, res) => {
   try {
     const sets = await Set.find().sort({ createdAt: -1 });
@@ -16,8 +14,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// @route   GET /api/sets/active
-// @desc    Get the active set
 router.get("/active", async (req, res) => {
   try {
     const activeSet = await Set.findOne({ isActive: true });
@@ -35,27 +31,25 @@ router.get("/active", async (req, res) => {
   }
 });
 
-// @route   POST /api/sets
-// @desc    Add a new set (single or bulk)
 router.post("/", async (req, res) => {
   try {
     let setsData = req.body;
 
-    // Ensure it's an array
+
     if (!Array.isArray(setsData)) {
       setsData = [setsData];
     }
 
-    // Validate input
+
     const invalid = setsData.find((s) => !s.name || !s.name.trim());
     if (invalid) {
       return res.status(400).json({ message: "Each set must have a name" });
     }
 
-    // Extract set names
+
     const setNames = setsData.map((s) => s.name.trim());
 
-    // Check duplicates in DB
+
     const existing = await Set.find({ name: { $in: setNames } });
     if (existing.length > 0) {
       return res.status(400).json({
@@ -65,7 +59,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Save (with isActive defaulting to false)
+
     const savedSets = await Set.insertMany(
       setsData.map((s) => ({
         name: s.name.trim(),
@@ -82,8 +76,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// @route   PUT /api/sets/:id
-// @desc    Edit a set name
 router.put("/:id", async (req, res) => {
   const { name } = req.body;
 
@@ -92,7 +84,7 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    // Check for duplicate name (excluding current set)
+
     const duplicate = await Set.findOne({
       name: name.trim(),
       _id: { $ne: req.params.id },
@@ -123,14 +115,12 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// @route   PUT /api/sets/:id/activate
-// @desc    Set a set as active
 router.put("/:id/activate", async (req, res) => {
   try {
-    // First, deactivate all sets
+
     await Set.updateMany({}, { isActive: false });
 
-    // Then activate the specified set
+
     const activatedSet = await Set.findByIdAndUpdate(
       req.params.id,
       { isActive: true },
@@ -153,8 +143,6 @@ router.put("/:id/activate", async (req, res) => {
   }
 });
 
-// @route   PUT /api/sets/deactivate
-// @desc    Deactivate all sets (no active set)
 router.put("/deactivate", async (req, res) => {
   try {
     await Set.updateMany({}, { isActive: false });
@@ -168,8 +156,6 @@ router.put("/deactivate", async (req, res) => {
   }
 });
 
-// @route   DELETE /api/sets/:id
-// @desc    Delete a set
 router.delete("/:id", async (req, res) => {
   try {
     const setToDelete = await Set.findById(req.params.id);

@@ -9,10 +9,9 @@ const sendCertificate = async (req, res) => {
 
     const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-    // Note: Database saving is handled by /api/users/record-attempt route
-    // This endpoint only generates and sends the certificate PDF
 
-    // Keep your HTML (not rendered by PDFKit, but preserved as requested)
+
+
     const html = `
     <!DOCTYPE html>
     <html>
@@ -31,19 +30,16 @@ const sendCertificate = async (req, res) => {
     <body class="flex items-center justify-center bg-gray-50">
       <div class="certificate bg-white border-8 border-yellow-600 rounded-2xl shadow-2xl flex flex-col items-center justify-start p-10 font-serif mx-auto">
 
-        <!-- Top Logos -->
         <div class="w-full flex justify-between items-center px-16">
           <img src="${frontendBaseURL}/club-logo.jpg" class="h-28 object-contain" />
           <img src="${frontendBaseURL}/college-logo.png" class="h-28 object-contain" />
         </div>
 
-        <!-- Title -->
         <div class="mt-6 text-center">
           <h1 class="text-5xl font-bold text-yellow-700 uppercase">Certificate of Achievement</h1>
           <p class="text-lg text-gray-600 italic">Voices and Minds United</p>
         </div>
 
-        <!-- Main Content -->
         <div class="text-center px-12 mt-6">
           <p class="text-2xl mb-4">This is proudly presented to</p>
           <h2 class="text-4xl font-bold text-gray-900 underline decoration-yellow-500 decoration-4 mb-6">
@@ -53,7 +49,6 @@ const sendCertificate = async (req, res) => {
           <p class="text-xl text-gray-700 mb-6">Score: <b>${score}</b> out of <b>${total}</b></p>
         </div>
 
-        <!-- Footer -->
         <div class="flex justify-center w-full px-16 mt-12">
           <div class="text-center">
             <p class="text-lg font-semibold">Date</p>
@@ -65,7 +60,7 @@ const sendCertificate = async (req, res) => {
     </html>
     `;
 
-    // Build a PDF that visually matches the Tailwind layout using PDFKit
+
     const width = 1000;
     const height = 700;
 
@@ -80,7 +75,7 @@ const sendCertificate = async (req, res) => {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
     });
 
-    // Background
+
     doc.rect(0, 0, width, height).fill("#f9fafb");
 
     const cardX = 0;
@@ -131,7 +126,7 @@ const sendCertificate = async (req, res) => {
     const rightLogoW = 200;
     const leftLogoX = innerX + logosPadX;
     const rightLogoX = innerX + logosPadX + logosBoxW - rightLogoW;
-    
+
     if (clubLogoBuf) {
       doc.image(clubLogoBuf, leftLogoX, logosY, {
         fit: [leftLogoW, logosH],
@@ -174,7 +169,7 @@ const sendCertificate = async (req, res) => {
     const nameX = innerX + (innerW - nameWidth) / 2;
     doc.fillColor("#111827");
     doc.text(nameText, nameX, cursorY, { lineBreak: false });
-    
+
     const underlineY = cursorY + doc.currentLineHeight() + 4;
     doc.save();
     doc.lineWidth(4);
@@ -202,7 +197,7 @@ const sendCertificate = async (req, res) => {
     doc.end();
     const pdfBuffer = await pdfDone;
 
-    // Try to send email using the email service (with automatic provider fallback)
+
     let emailSent = false;
     try {
       await sendCertificateEmail(name, email, pdfBuffer);
@@ -210,15 +205,15 @@ const sendCertificate = async (req, res) => {
       console.log("✅ Certificate email sent successfully to:", email);
     } catch (emailError) {
       console.error("⚠️ Email failed (non-critical):", emailError.message);
-      // Don't throw - email is optional, certificate was still generated
+
     }
 
-    // Return success even if email failed (PDF was generated successfully)
-    res.json({ 
-      message: emailSent 
-        ? "Certificate generated and sent to email" 
+
+    res.json({
+      message: emailSent
+        ? "Certificate generated and sent to email"
         : "Certificate generated successfully (email delivery unavailable)",
-      emailSent 
+      emailSent
     });
   } catch (err) {
     console.error("❌ Error sending certificate:", err);
@@ -226,7 +221,7 @@ const sendCertificate = async (req, res) => {
   }
 };
 
-// Helper functions
+
 function roundedRect(doc, x, y, w, h, r) {
   doc.moveTo(x + r, y);
   doc.lineTo(x + w - r, y);

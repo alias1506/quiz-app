@@ -13,32 +13,31 @@ function App() {
     <BrowserRouter>
       <SecurityProvider>
         <Routes>
-        <Route
-          path="/"
-          element={
-            <BlockIfLoggedIn>
-              <Starting />
-            </BlockIfLoggedIn>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/thank-you"
-          element={
-            <ThankYouGuard>
-              <ThankYou />
-            </ThankYouGuard>
-          }
-        />
-        {/* <Route path="/certificate" element={<Certificate />} /> */}
-        <Route path="*" element={<NotFound />} />
+          <Route
+            path="/"
+            element={
+              <BlockIfLoggedIn>
+                <Starting />
+              </BlockIfLoggedIn>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/thank-you"
+            element={
+              <ThankYouGuard>
+                <ThankYou />
+              </ThankYouGuard>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </SecurityProvider>
     </BrowserRouter>
