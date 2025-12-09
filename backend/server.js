@@ -17,6 +17,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Environment variable validation
+if (!process.env.GMAIL_APP_PASSWORD) {
+  console.warn("⚠️  WARNING: GMAIL_APP_PASSWORD not set - certificate emails will not be sent!");
+}
+if (!process.env.MONGO_URI) {
+  console.error("❌ ERROR: MONGO_URI not set!");
+  process.exit(1);
+}
+
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI, {

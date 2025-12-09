@@ -206,43 +206,75 @@ const sendCertificate = async (req, res) => {
     let emailSent = false;
     if (process.env.GMAIL_APP_PASSWORD) {
       try {
-        // Configure transporter with timeout settings for serverless
+        // Configure transporter for Vercel serverless environment
+        // Use port 465 with SSL for better compatibility
         let transporter = nodemailer.createTransport({
           host: "smtp.gmail.com",
-          port: 587,
-          secure: false, // Use TLS
+          port: 465, // SSL port instead of 587 TLS
+          secure: true, // Use SSL
           auth: {
             user: "iiedebateandquizclub@gmail.com",
             pass: process.env.GMAIL_APP_PASSWORD,
           },
           tls: {
             rejectUnauthorized: false,
+            minVersion: 'TLSv1.2'
           },
-          connectionTimeout: 10000, // 10 seconds
-          greetingTimeout: 10000,
-          socketTimeout: 10000,
+          connectionTimeout: 30000, // 30 seconds for serverless
+          greetingTimeout: 30000,
+          socketTimeout: 30000,
+          pool: false, // Don't pool connections in serverless
+          maxConnections: 1,
+          rateDelta: 20000,
+          rateLimit: 5,
         });
 
-        // Send email with timeout
-        await Promise.race([
-          transporter.sendMail({
-            from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
-            to: email,
-            subject: "Your Certificate of Participation 🎓",
-            text: `Hello ${name},\n\nThank you for taking part in Quizopolis! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
-            attachments: [{ filename: "certificate.pdf", content: pdfBuffer }],
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Email timeout")), 15000)
-          ),
-        ]);
+        console.log(`📧 Attempting to send certificate to: ${email}`);
+
+        // Send email with extended timeout for serverless
+        const emailPromise = transporter.sendMail({
+          from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
+          to: email,
+          subject: "Your Certificate of Participation 🎓",
+          text: `Hello ${name},\n\nThank you for taking part in Quizopolis! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #3b82f6;">Hello ${name},</h2>
+              <p style="font-size: 16px; line-height: 1.6;">
+                Thank you for taking part in <strong>Quizopolis</strong>! 🎉
+              </p>
+              <p style="font-size: 16px; line-height: 1.6;">
+                Please find attached your certificate of participation.
+              </p>
+              <p style="font-size: 14px; color: #666; margin-top: 30px;">
+                Warm regards,<br>
+                <strong>IIE Debate & Quiz Club</strong>
+              </p>
+            </div>
+          `,
+          attachments: [{ 
+            filename: "certificate.pdf", 
+            content: pdfBuffer,
+            contentType: 'application/pdf'
+          }],
+        });
+
+        // 45 second timeout for Vercel serverless functions
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Email timeout after 45s")), 45000)
+        );
+
+        await Promise.race([emailPromise, timeoutPromise]);
         
         emailSent = true;
-        console.log("✅ Certificate email sent successfully");
+        console.log("✅ Certificate email sent successfully to:", email);
       } catch (emailError) {
-        console.warn("⚠️ Email failed (non-critical):", emailError.message);
-        // Don't throw - email is optional
+        console.error("⚠️ Email failed (non-critical):", emailError.message);
+        console.error("Email error details:", emailError);
+        // Don't throw - email is optional, certificate was still generated
       }
+    } else {
+      console.warn("⚠️ GMAIL_APP_PASSWORD not configured - skipping email");
     }
 
     // Return success even if email failed (PDF was generated successfully)
