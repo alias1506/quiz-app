@@ -29,8 +29,8 @@ function Dashboard() {
 
   const API_BASE_URL =
     typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.MODE === "production"
+      import.meta.env &&
+      import.meta.env.MODE === "production"
       ? ""
       : "http://localhost:5000";
 
@@ -64,8 +64,7 @@ function Dashboard() {
       );
       if (setQuestions.length === 0) {
         throw new Error(
-          `No questions found in the active set "${
-            setName || "Unknown"
+          `No questions found in the active set "${setName || "Unknown"
           }". Please add questions to this set.`
         );
       }
@@ -170,7 +169,7 @@ function Dashboard() {
       if (!attemptsData.canAttempt) {
         // User has exhausted attempts
         let countdownInterval;
-        
+
         await Swal.fire({
           title: "Daily Limit Reached!",
           html: `<p>You have used all 3 attempts for today (${attemptsData.currentAttempts}/3).</p>
@@ -182,22 +181,22 @@ function Dashboard() {
           didOpen: () => {
             const countdownElement = document.getElementById('countdown-timer');
             let timeLeft = attemptsData.timeUntilReset;
-            
+
             const updateCountdown = () => {
               if (timeLeft <= 0) {
                 countdownElement.textContent = "0h 0m 0s";
                 clearInterval(countdownInterval);
                 return;
               }
-              
+
               const hours = Math.floor(timeLeft / (1000 * 60 * 60));
               const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
               const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-              
+
               countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
               timeLeft -= 1000;
             };
-            
+
             updateCountdown();
             countdownInterval = setInterval(updateCountdown, 1000);
           },
@@ -289,6 +288,7 @@ function Dashboard() {
 
   // ✅ Generate PDF, save to DB, show popup, then redirect to /thank-you
   const handleGenerateCertificate = async () => {
+    console.log("🎯 Generate Certificate clicked!");
     const user = JSON.parse(sessionStorage.getItem("user")) || {};
     const score = calculateScore();
     const total = questions.length;
@@ -308,6 +308,10 @@ function Dashboard() {
       joinedOn: new Date().toISOString(),
       quizName: activeSet?.name || "Quiz",
     };
+
+    console.log("📦 Payload:", payload);
+    console.log("🌐 API Base URL:", API_BASE_URL);
+    console.log("🔗 Full URL:", `${API_BASE_URL}/api/certificate/send`);
 
     try {
       setSending(true); // show button loader and disable retake
@@ -349,7 +353,7 @@ function Dashboard() {
       // 3) Success popup with dynamic message based on email delivery
       await Swal.fire({
         title: emailSent ? "Certificate Sent! 🎉" : "Certificate Generated! 🎉",
-        text: emailSent 
+        text: emailSent
           ? "Your certificate PDF has been emailed. Please check your inbox and spam folder."
           : "Your certificate has been generated successfully. If you don't receive the email, please contact support.",
         icon: "success",
@@ -613,10 +617,9 @@ function Dashboard() {
                   disabled={sending}
                   className={`flex items-center gap-2 px-8 py-3 text-white font-semibold rounded-lg transition-all duration-200
                     bg-gradient-to-r from-blue-600 to-purple-600
-                    ${
-                      sending
-                        ? "opacity-70 cursor-not-allowed"
-                        : "hover:from-blue-700 hover:to-purple-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
+                    ${sending
+                      ? "opacity-70 cursor-not-allowed"
+                      : "hover:from-blue-700 hover:to-purple-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
                     }`}
                   title={
                     sending
@@ -632,10 +635,9 @@ function Dashboard() {
                   onClick={handleGenerateCertificate}
                   disabled={sending}
                   className={`flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg transition-all duration-200
-                    ${
-                      sending
-                        ? "opacity-70 cursor-not-allowed"
-                        : "hover:from-green-700 hover:to-emerald-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
+                    ${sending
+                      ? "opacity-70 cursor-not-allowed"
+                      : "hover:from-green-700 hover:to-emerald-700 hover:shadow-lg transform hover:scale-105 active:scale-95"
                     }`}
                 >
                   {sending ? (
@@ -705,11 +707,10 @@ function Dashboard() {
                 <button
                   key={index}
                   onClick={() => handleOptionSelect(index)}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md active:scale-95 ${
-                    answers[currentQuestion] === index
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md active:scale-95 ${answers[currentQuestion] === index
                       ? "border-blue-500 bg-blue-50 text-blue-900"
                       : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-base font-medium leading-tight pr-2">
@@ -728,11 +729,10 @@ function Dashboard() {
             <button
               onClick={handlePrevious}
               disabled={isFirstQuestion}
-              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                isFirstQuestion
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${isFirstQuestion
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300 hover:shadow-md transform hover:scale-105 active:scale-95"
-              }`}
+                }`}
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="hidden xs:inline">Previous</span>
@@ -742,11 +742,10 @@ function Dashboard() {
               <button
                 onClick={handleSubmit}
                 disabled={!hasAnswered}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  hasAnswered
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${hasAnswered
                     ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 <CheckCircle className="h-4 w-4" />
                 <span className="hidden xs:inline">Complete Quiz</span>
@@ -756,11 +755,10 @@ function Dashboard() {
               <button
                 onClick={handleNext}
                 disabled={!hasAnswered}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  hasAnswered
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${hasAnswered
                     ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 <span className="hidden xs:inline">Next</span>
                 <span className="xs:hidden">Next</span>
@@ -783,10 +781,10 @@ function Dashboard() {
 // Wrap Dashboard with security check
 export default function DashboardWrapper() {
   const { showError } = useSecurity();
-  
+
   if (showError) {
     return <NotFound />;
   }
-  
+
   return <Dashboard />;
 }
