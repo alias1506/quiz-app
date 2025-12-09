@@ -45,7 +45,7 @@ app.use("/api/sets", setsRoutes);
 app.use("/api/certificate", certificateRoutes);
 
 // API 404 Handler - Must be after API routes but before frontend catch-all
-app.use("/api/*", (req, res) => {
+app.use("/api", (req, res) => {
   res.status(404).json({ message: "API Endpoint not found" });
 });
 
