@@ -16,11 +16,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-  console.warn("⚠️  WARNING: Gmail credentials not set - certificate emails will not be sent!");
-  console.warn("⚠️  Set GMAIL_USER and GMAIL_APP_PASSWORD in environment variables.");
+if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.warn("⚠️  WARNING: Email credentials not set - certificate emails will not be sent!");
+  console.warn("⚠️  Set SMTP_USER and SMTP_PASS in environment variables.");
 } else {
-  console.log("📧 Email configured: Gmail SMTP");
+  console.log("📧 Email configured: SMTP");
 }
 
 if (!process.env.MONGO_URI) {

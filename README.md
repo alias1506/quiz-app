@@ -4,13 +4,13 @@ A full-stack quiz application with certificate generation and email delivery.
 
 ## 📧 Email Service
 
-Uses **Gmail SMTP** for free and reliable email delivery.
+Uses **Gmail SMTP** (or any SMTP provider) for free and reliable email delivery.
 
 ### Quick Setup
 
 1. **Enable 2-Step Verification** on `iiedebateandquizclub@gmail.com`
 2. **Generate App Password**: [Google App Passwords](https://myaccount.google.com/apppasswords)
-3. **Update backend/.env**: Set `GMAIL_USER` and `GMAIL_APP_PASSWORD`
+3. **Update backend/.env**: Set `SMTP_USER` and `SMTP_PASS`
 4. **Add to Render**: Settings → Environment Variables
 5. **Deploy**
 
@@ -26,8 +26,10 @@ Add these variables:
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `GMAIL_USER` | `iiedebateandquizclub@gmail.com` | Your Gmail address |
-| `GMAIL_APP_PASSWORD` | `your-16-char-password` | App Password from Google |
+| `SMTP_HOST` | `smtp.gmail.com` | SMTP Server (default: smtp.gmail.com) |
+| `SMTP_PORT` | `465` | SMTP Port (default: 465) |
+| `SMTP_USER` | `email@gmail.com` | Your Email |
+| `SMTP_PASS` | `your-password` | App Password |
 | `MONGO_URI` | `mongodb+srv://...` | MongoDB connection string |
 | `FRONTEND_URL` | `https://quiz-app-wpgi.onrender.com` | Your Render app URL |
 | `GEMINI_API_KEY` | `AIzaSyAR_RmS2WPamTkivWXFEFYMqkuCTcDZIrk` | Gemini API key |
@@ -43,17 +45,22 @@ The `backend/.env` file is already configured with placeholder values.
 1. Open `backend/.env`
 2. Update these lines:
    ```env
-   GMAIL_USER=iiedebateandquizclub@gmail.com
-   GMAIL_APP_PASSWORD=your-16-char-app-password
-   ```
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=465
+    SMTP_USER=iiedebateandquizclub@gmail.com
+    SMTP_PASS=your-16-char-app-password
+    ```
 3. Get App Password from [Google](https://myaccount.google.com/apppasswords)
 
 **Full .env configuration:**
 
 ```env
 # Gmail SMTP
-GMAIL_USER=iiedebateandquizclub@gmail.com
-GMAIL_APP_PASSWORD=your-app-password-here
+# Email SMTP (Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=iiedebateandquizclub@gmail.com
+SMTP_PASS=your-app-password-here
 
 # MongoDB Database
 MONGO_URI=mongodb+srv://iiedebateandquizclub:iiedebateandquizclub@cluster.xvjap5l.mongodb.net/?appName=Cluster
@@ -130,6 +137,7 @@ When you send an email, you'll see:
 ### Email not sending
 - Verify `GMAIL_USER` and `GMAIL_APP_PASSWORD` are set on Render
 - Check Render logs for errors
+- The app uses **Port 465 (SSL)** for better reliability. Ensure this outbound port is allowed.
 - Make sure 2-Step Verification is enabled on Gmail
 - Regenerate App Password if needed
 

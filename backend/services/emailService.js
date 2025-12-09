@@ -8,25 +8,29 @@ const nodemailer = require('nodemailer');
  * @returns {Promise<boolean>} - Success status
  */
 async function sendCertificateEmail(name, email, pdfBuffer) {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    throw new Error("Gmail credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in environment variables.");
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error("Email credentials not configured. Set SMTP_USER and SMTP_PASS variables.");
   }
+
+  const fromEmail = process.env.SMTP_USER;
 
   try {
     console.log(`📧 Sending certificate to: ${email}`);
 
     // Create transporter
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE === 'true' || true,
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
     // Send email
     const info = await transporter.sendMail({
-      from: `"IIE Debate & Quiz Club" <${process.env.GMAIL_USER}>`,
+      from: `"IIE Debate & Quiz Club" <${fromEmail}>`,
       to: email,
       subject: 'Your Certificate of Participation 🎓',
       html: `
@@ -93,23 +97,27 @@ async function sendEmail(options) {
     throw new Error("Email 'to' and 'subject' are required");
   }
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    throw new Error("Gmail credentials not configured");
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error("Email credentials not configured. Set SMTP_USER and SMTP_PASS variables.");
   }
+
+  const fromEmail = process.env.SMTP_USER;
 
   try {
     console.log(`📧 Sending email to: ${to}`);
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE === 'true' || true,
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
     const info = await transporter.sendMail({
-      from: `"IIE Debate & Quiz Club" <${process.env.GMAIL_USER}>`,
+      from: `"IIE Debate & Quiz Club" <${fromEmail}>`,
       to: to,
       subject: subject,
       html: html || text,
