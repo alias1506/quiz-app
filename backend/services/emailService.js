@@ -1,6 +1,5 @@
 /**
- * Email Service - Supports multiple email providers
- * Priority: Resend > SendGrid > Nodemailer (SMTP fallback)
+ * Email Service - Gmail SMTP for certificate delivery
  */
 
 const nodemailer = require("nodemailer");
