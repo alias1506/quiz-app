@@ -325,6 +325,10 @@ function Dashboard() {
         );
       }
 
+      // Parse certificate response to check if email was sent
+      const certData = await resCert.json();
+      const emailSent = certData.emailSent !== false; // default to true for backward compatibility
+
       // 2) Save user score to DB (authRoute /api/users)
       const resUser = await fetch(`${API_BASE_URL}/api/users`, {
         method: "POST",
@@ -345,10 +349,12 @@ function Dashboard() {
         }
       }
 
-      // 3) Success popup
+      // 3) Success popup with dynamic message based on email delivery
       await Swal.fire({
-        title: "Certificate Sent! 🎉",
-        text: "Your certificate PDF has been emailed. Please check your inbox and spam folder.",
+        title: emailSent ? "Certificate Sent! 🎉" : "Certificate Generated! 🎉",
+        text: emailSent 
+          ? "Your certificate PDF has been emailed. Please check your inbox and spam folder."
+          : "Your certificate has been generated successfully. If you don't receive the email, please contact support.",
         icon: "success",
         confirmButtonColor: "#3b82f6",
       });

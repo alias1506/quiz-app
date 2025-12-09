@@ -219,29 +219,56 @@ const sendCertificate = async (req, res) => {
     doc.end();
     const pdfBuffer = await pdfDone;
 
-    // Verify Gmail credentials are available
-    if (!process.env.GMAIL_APP_PASSWORD) {
-      throw new Error("GMAIL_APP_PASSWORD is not configured in environment variables");
+    // Try to send email, but don't fail if it times out
+    let emailSent = false;
+    if (process.env.GMAIL_APP_PASSWORD) {
+      try {
+        // Configure transporter with timeout settings for serverless
+        let transporter = nodemailer.createTransport({
+          host: "smtp.gmail.com",
+          port: 587,
+          secure: false, // Use TLS
+          auth: {
+            user: "iiedebateandquizclub@gmail.com",
+            pass: process.env.GMAIL_APP_PASSWORD,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 10000, // 10 seconds
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
+        });
+
+        // Send email with timeout
+        await Promise.race([
+          transporter.sendMail({
+            from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
+            to: email,
+            subject: "Your Certificate of Participation 🎓",
+            text: `Hello ${name},\n\nThank you for taking part in Quizopolis! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
+            attachments: [{ filename: "certificate.pdf", content: pdfBuffer }],
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Email timeout")), 15000)
+          ),
+        ]);
+        
+        emailSent = true;
+        console.log("✅ Certificate email sent successfully");
+      } catch (emailError) {
+        console.warn("⚠️ Email failed (non-critical):", emailError.message);
+        // Don't throw - email is optional
+      }
     }
 
-    // Send email with PDF attachment
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "iiedebateandquizclub@gmail.com",
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
+    // Return success even if email failed (PDF was generated successfully)
+    res.json({ 
+      message: emailSent 
+        ? "Certificate generated and sent to email" 
+        : "Certificate generated successfully (email delivery unavailable)",
+      emailSent 
     });
-
-    await transporter.sendMail({
-      from: "IIE Debate & Quiz Club <iiedebateandquizclub@gmail.com>",
-      to: email,
-      subject: "Your Certificate of Participation 🎓",
-      text: `Hello ${name},\n\nThank you for taking part in Quizopolis! 🎉\nPlease find attached your certificate of participation.\n\nWarm regards,\nIIE Debate & Quiz Club`,
-      attachments: [{ filename: "certificate.pdf", content: pdfBuffer }],
-    });
-
-    res.json({ message: "Certificate sent successfully" });
   } catch (err) {
     console.error("❌ Error sending certificate:", err);
     res.status(500).json({ message: "Error sending certificate" });
