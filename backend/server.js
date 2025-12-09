@@ -16,14 +16,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Environment variable validation
 if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
   console.warn("⚠️  WARNING: Gmail credentials not set - certificate emails will not be sent!");
   console.warn("⚠️  Set GMAIL_USER and GMAIL_APP_PASSWORD in environment variables.");
 } else {
-  const { getEmailCount } = require("./services/emailService");
   console.log("📧 Email configured: Gmail SMTP");
-  console.log(`📊 Daily email usage: ${getEmailCount()} (Gmail limit: 500/day)`);
 }
 
 if (!process.env.MONGO_URI) {
@@ -55,8 +52,7 @@ app.use((req, res) => {
 });
 
 module.exports = app;
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-  });
-}
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

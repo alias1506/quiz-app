@@ -97,7 +97,6 @@ npm start
 Expected output:
 ```
 📧 Email configured: Gmail SMTP
-📊 Daily email usage: 0/500 (Gmail limit: 500/day)
 ✅ MongoDB connected
 🚀 Server running at http://localhost:5000
 ```
@@ -107,7 +106,6 @@ When you send an email, you'll see:
 📧 Sending certificate to: user@example.com
 ✅ Email sent successfully
 📬 Message ID: <abc123@gmail.com>
-📊 Daily emails sent: 1/500
 ```
 
 ### Production
@@ -121,11 +119,7 @@ When you send an email, you'll see:
 
 - **Success Rate**: ~95%
 - **Delivery Time**: 5-15 seconds
-- **Free Tier Limits**:
-  - **Daily**: 500 emails/day
-  - **Monthly**: Unlimited (within daily limit)
-- **Daily Counter**: Automatically tracks emails sent (resets daily at midnight)
-- **Terminal Display**: Shows usage like `5/500` after each email sent
+- **Gmail Limits**: Gmail enforces 500 emails/day (managed by Google, not the app)
 - **No Domain Required**: ✅ Works immediately
 - **Sends to Any Email**: ✅ No restrictions
 
@@ -145,9 +139,9 @@ When you send an email, you'll see:
 - Ask users to check spam folder
 
 ### Rate limit reached
-- **Daily limit**: 500 emails/day (resets at midnight)
-- Check terminal counter: `📊 Daily emails sent: X/500`
-- Wait until midnight for reset
+- **Gmail enforces**: 500 emails/day limit (managed by Google)
+- Gmail will reject emails after 500/day
+- Wait until midnight (GMT) for reset
 - Consider using multiple Gmail accounts if needed
 
 ---

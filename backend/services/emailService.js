@@ -1,29 +1,4 @@
 const nodemailer = require('nodemailer');
-let emailCount = 0;
-let lastResetDate = new Date().toDateString();
-
-// Reset counter daily
-const resetCounterIfNeeded = () => {
-  const today = new Date().toDateString();
-  if (today !== lastResetDate) {
-    emailCount = 0;
-    lastResetDate = today;
-    console.log("📊 Email counter reset for new day");
-  }
-};
-
-// Get current email count status
-const getEmailCountStatus = () => {
-  resetCounterIfNeeded();
-  return `${emailCount}/500`;
-};
-
-// Increment email counter
-const incrementEmailCount = () => {
-  resetCounterIfNeeded();
-  emailCount++;
-  console.log(`📊 Daily emails sent: ${getEmailCountStatus()}`);
-};
 
 /**
  * Send certificate email with PDF attachment
@@ -95,9 +70,6 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
     console.log("✅ Email sent successfully");
     console.log("📬 Message ID:", info.messageId);
 
-    // Increment counter after successful send
-    incrementEmailCount();
-
     return true;
   } catch (error) {
     console.error("❌ Email delivery failed:", error.message);
@@ -146,9 +118,6 @@ async function sendEmail(options) {
     console.log("✅ Email sent successfully");
     console.log("📬 Message ID:", info.messageId);
 
-    // Increment counter after successful send
-    incrementEmailCount();
-
     return true;
   } catch (error) {
     console.error("❌ Email delivery failed:", error.message);
@@ -156,16 +125,7 @@ async function sendEmail(options) {
   }
 }
 
-/**
- * Get current email count for the day
- * @returns {string} - Email count status (e.g., "5/500")
- */
-function getEmailCount() {
-  return getEmailCountStatus();
-}
-
 module.exports = {
   sendEmail,
   sendCertificateEmail,
-  getEmailCount,
 };
