@@ -329,24 +329,21 @@ function Dashboard() {
       const certData = await resCert.json();
       const emailSent = certData.emailSent !== false; // default to true for backward compatibility
 
-      // 2) Save user score to DB (authRoute /api/users)
-      const resUser = await fetch(`${API_BASE_URL}/api/users`, {
+      // 2) Update score in database (attempt was already recorded in Starting.jsx)
+      const scoreResponse = await fetch(`${API_BASE_URL}/api/users/update-score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          email: payload.email,
+          score: payload.score,
+          total: payload.total,
+          quizName: payload.quizName,
+        }),
       });
-      if (!resUser.ok) {
-        const errorData = await resUser.json().catch(() => ({}));
-        // If email already exists (409), silently proceed - this is expected behavior for retakes
-        if (resUser.status === 409) {
-          // Don't show any alert - email existing is normal for retakes
-          // Just log it and continue
-          console.log("User already exists in database, continuing with certificate generation");
-        } else {
-          throw new Error(
-            errorData.message || `Failed to save user: ${resUser.status}`
-          );
-        }
+
+      if (!scoreResponse.ok) {
+        console.warn("Failed to update score in database:", await scoreResponse.text());
+        // Continue anyway - certificate was sent
       }
 
       // 3) Success popup with dynamic message based on email delivery

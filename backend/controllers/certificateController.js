@@ -9,25 +9,8 @@ const sendCertificate = async (req, res) => {
 
     const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-    // Save quiz completion as new entry
-    const normalizedEmail = email.toLowerCase().trim();
-    
-    // Calculate total attempts for this email
-    const totalAttempts = await User.countDocuments({
-      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    });
-    const attemptNumber = totalAttempts + 1;
-    
-    const newEntry = new User({
-      name: name,
-      email: normalizedEmail,
-      score: score,
-      total: total,
-      quizName: quizName || "Quiz",
-      attemptNumber: attemptNumber,
-      joinedOn: new Date(date || Date.now()),
-    });
-    await newEntry.save();
+    // Note: Database saving is handled by /api/users/record-attempt route
+    // This endpoint only generates and sends the certificate PDF
 
     // Keep your HTML (not rendered by PDFKit, but preserved as requested)
     const html = `

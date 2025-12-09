@@ -218,10 +218,12 @@ router.post("/record-attempt", async (req, res) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Find most recent entry for this email
+    console.log(`🔍 Recording attempt for: ${normalizedEmail}`);
+
+    // Find most recent entry for this email (sort by createdAt instead of lastAttemptDate for more reliable ordering)
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    }).sort({ lastAttemptDate: -1 });
+    }).sort({ createdAt: -1, _id: -1 });
 
     let dailyAttempts = 0;
     let shouldCreateNew = false;
@@ -246,11 +248,15 @@ router.post("/record-attempt", async (req, res) => {
           // Same day - update existing entry
           dailyAttempts = recentUser.dailyAttempts || 0;
 
+          console.log(`✏️ Same day attempt - Current: ${dailyAttempts}, Updating existing record ID: ${recentUser._id}`);
+
           // Check if limit reached
           if (dailyAttempts >= 3) {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
             const timeUntilReset = tomorrow.getTime() - now.getTime();
+
+            console.log(`🚫 Limit reached for ${normalizedEmail}`);
 
             return res.status(429).json({
               success: false,
@@ -268,6 +274,8 @@ router.post("/record-attempt", async (req, res) => {
           recentUser.name = name; // Update name in case it changed
           await recentUser.save();
 
+          console.log(`✅ Updated existing record - Attempts: ${dailyAttempts}/3`);
+
           return res.status(200).json({
             success: true,
             message: "Attempt recorded successfully",
@@ -280,6 +288,7 @@ router.post("/record-attempt", async (req, res) => {
           });
         } else {
           // Different day (24h+ passed) - create new entry
+          console.log(`📅 Different day detected - Creating new entry`);
           shouldCreateNew = true;
           attemptNumber++;
           dailyAttempts = 1; // Reset to 1 for new day
@@ -292,6 +301,7 @@ router.post("/record-attempt", async (req, res) => {
       }
     } else {
       // First time user - create new entry
+      console.log(`🆕 First time user - Creating initial entry`);
       shouldCreateNew = true;
       attemptNumber = 1;
       dailyAttempts = 1;
@@ -299,6 +309,8 @@ router.post("/record-attempt", async (req, res) => {
 
     // Create new entry (first time user or after 24h)
     if (shouldCreateNew) {
+      console.log(`➕ Creating new entry - Attempt #${attemptNumber}, Daily: ${dailyAttempts}/3`);
+      
       const newUser = new User({
         name: name,
         email: normalizedEmail,
@@ -308,6 +320,8 @@ router.post("/record-attempt", async (req, res) => {
         lastAttemptDate: now,
       });
       await newUser.save();
+
+      console.log(`✅ New entry created - ID: ${newUser._id}`);
 
       return res.status(201).json({
         success: true,
@@ -329,6 +343,50 @@ router.post("/record-attempt", async (req, res) => {
       message: "Error recording attempt",
       error: process.env.NODE_ENV === "development" ? err.message : undefined
     });
+  }
+});
+
+// POST /api/users/update-score
+// Update score for the most recent attempt
+router.post("/update-score", async (req, res) => {
+  try {
+    const { email, score, total, quizName } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Find most recent entry for this email
+    const recentUser = await User.findOne({
+      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
+    }).sort({ lastAttemptDate: -1 });
+
+    if (!recentUser) {
+      return res.status(404).json({ message: "No attempt found for this email" });
+    }
+
+    // Update the score and quiz details
+    recentUser.score = score;
+    recentUser.total = total;
+    if (quizName) {
+      recentUser.quizName = quizName;
+    }
+    await recentUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Score updated successfully",
+      user: {
+        name: recentUser.name,
+        email: recentUser.email,
+        score: recentUser.score,
+        total: recentUser.total,
+      },
+    });
+  } catch (err) {
+    console.error("Update score error:", err);
+    return res.status(500).json({ message: "Error updating score" });
   }
 });
 

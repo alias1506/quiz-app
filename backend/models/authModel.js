@@ -34,11 +34,11 @@ const userSchema = new mongoose.Schema(
     },
     dailyAttempts: {
       type: Number,
-      default: 0,
+      default: 1, // First attempt should be 1, not 0
     },
     lastAttemptDate: {
       type: Date,
-      default: null,
+      default: Date.now, // Set to current time by default
     },
   },
   { 
