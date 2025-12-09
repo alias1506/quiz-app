@@ -40,6 +40,23 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
       socketTimeout: 10000,
     });
 
+    // Verify connection configuration
+    try {
+      await new Promise((resolve, reject) => {
+        transporter.verify(function (error, success) {
+          if (error) {
+            console.error("❌ SMTP Verification Failed:", error);
+            reject(error);
+          } else {
+            console.log("✅ SMTP Verification Success");
+            resolve(success);
+          }
+        });
+      });
+    } catch (verifyError) {
+      throw new Error(`SMTP Connection Failed: ${verifyError.message}`);
+    }
+
     // Send email
     const info = await transporter.sendMail({
       from: `"IIE Debate & Quiz Club" <${fromEmail}>`,
@@ -136,6 +153,23 @@ async function sendEmail(options) {
       },
       connectionTimeout: 10000,
     });
+
+    // Verify connection configuration
+    try {
+      await new Promise((resolve, reject) => {
+        transporter.verify(function (error, success) {
+          if (error) {
+            console.error("❌ SMTP Verification Failed:", error);
+            reject(error);
+          } else {
+            console.log("✅ SMTP Verification Success");
+            resolve(success);
+          }
+        });
+      });
+    } catch (verifyError) {
+      throw new Error(`SMTP Connection Failed: ${verifyError.message}`);
+    }
 
     const info = await transporter.sendMail({
       from: `"IIE Debate & Quiz Club" <${fromEmail}>`,
