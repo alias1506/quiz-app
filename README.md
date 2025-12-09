@@ -20,8 +20,13 @@ Uses **Gmail SMTP** (or any SMTP provider) for free and reliable email delivery.
 
 ### For Render (Production)
 
-Go to **Render Dashboard → Your Service → Environment**
+Go to **Render Dashboard → New Web Service**
 
+**Settings:**
+- **Build Command:** `npm run render-build`
+- **Start Command:** `npm start`
+
+**Environment Variables:**
 Add these variables:
 
 | Variable | Value | Description |
@@ -89,7 +94,13 @@ git commit -m "Deploy to Render"
 git push origin main
 ```
 
-Render will auto-deploy from your GitHub repository.
+1. **Push code** to GitHub
+2. **Create New Web Service** on Render
+3. connect your repository
+4. Use settings:
+   - **Build Command:** `npm run render-build`
+   - **Start Command:** `npm start`
+5. Add Environment Variables from above
 
 ---
 

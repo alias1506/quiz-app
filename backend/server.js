@@ -20,7 +20,9 @@ if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
   console.warn("⚠️  WARNING: Email credentials not set - certificate emails will not be sent!");
   console.warn("⚠️  Set SMTP_USER and SMTP_PASS in environment variables.");
 } else {
-  console.log("📧 Email configured: SMTP");
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = process.env.SMTP_PORT || 465;
+  console.log(`📧 Email configured: SMTP (${smtpHost}:${smtpPort})`);
 }
 
 if (!process.env.MONGO_URI) {
@@ -36,20 +38,33 @@ mongoose
   .then(() => console.log("✅ MongoDB connected to 'Quiz' database"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-if (process.env.NODE_ENV === "production") {
-  app.use("/", express.static("frontend/dist"));
-  app.use("/dashboard", express.static("frontend/dist"));
-  app.use("/thank-you", express.static("frontend/dist"));
-}
-
+// Routes
 app.use("/api/users", authRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/sets", setsRoutes);
 app.use("/api/certificate", certificateRoutes);
 
-app.use((req, res) => {
-  res.status(404).json({ message: "Endpoint not found" });
+// API 404 Handler - Must be after API routes but before frontend catch-all
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ message: "API Endpoint not found" });
 });
+
+// Serve Frontend in Production
+if (process.env.NODE_ENV === "production") {
+  const path = require("path");
+  // Serve static files from frontend/dist
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  // Handle React Routing (SPA) - Return index.html for all non-API routes
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../frontend/dist", "index.html"));
+  });
+} else {
+  // Basic 404 for dev mode if not hitting API
+  app.use((req, res) => {
+    res.status(404).json({ message: "Endpoint not found" });
+  });
+}
 
 module.exports = app;
 

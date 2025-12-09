@@ -18,14 +18,26 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
     console.log(`📧 Sending certificate to: ${email}`);
 
     // Create transporter
+    // Determine strict SSL based on port (465 = true, others = false) or explicit env var
+    const port = Number(process.env.SMTP_PORT) || 465;
+    const isSecure = process.env.SMTP_SECURE !== undefined
+      ? process.env.SMTP_SECURE === 'true'
+      : port === 465;
+
+    console.log(`🔌 Connecting to SMTP: ${process.env.SMTP_HOST || 'smtp.gmail.com'}:${port} (Secure: ${isSecure})`);
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_SECURE === 'true' || true,
+      port: port,
+      secure: isSecure,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      // timeouts for reliability on slow connections
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
 
     // Send email
@@ -106,14 +118,23 @@ async function sendEmail(options) {
   try {
     console.log(`📧 Sending email to: ${to}`);
 
+    // Determine strict SSL based on port (465 = true, others = false) or explicit env var
+    const port = Number(process.env.SMTP_PORT) || 465;
+    const isSecure = process.env.SMTP_SECURE !== undefined
+      ? process.env.SMTP_SECURE === 'true'
+      : port === 465;
+
+    console.log(`🔌 Connecting to SMTP: ${process.env.SMTP_HOST || 'smtp.gmail.com'}:${port} (Secure: ${isSecure})`);
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_SECURE === 'true' || true,
+      port: port,
+      secure: isSecure,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      connectionTimeout: 10000,
     });
 
     const info = await transporter.sendMail({
