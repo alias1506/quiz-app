@@ -24,22 +24,10 @@ export function SecurityProvider({ children }) {
     // Pages where tab switching is NOT allowed (Starting, Dashboard, Thank You)
     const noTabSwitchPages = isStarting || isDashboard || isThankYou;
 
-    // Prevent DevTools
-    const detectDevTools = () => {
-      const threshold = 160;
-      if (
-        window.outerWidth - window.innerWidth > threshold ||
-        window.outerHeight - window.innerHeight > threshold
-      ) {
-        setShowError(true);
-      }
-    };
-
     // Prevent Right Click & F12
     const preventRightClick = (e) => {
-      if (e.button === 2 || e.keyCode === 123) {
+      if (e.button === 2) {
         e.preventDefault();
-        setShowError(true);
       }
     };
 
@@ -85,21 +73,16 @@ export function SecurityProvider({ children }) {
     };
 
     // Add event listeners
-    window.addEventListener('resize', detectDevTools);
     window.addEventListener('contextmenu', preventRightClick);
     document.addEventListener('keydown', preventDevToolsShortcuts);
 
-    // Add tab visibility listener only for pages that allow it
+    // Add tab visibility listener only for pages that need it
     if (!noTabSwitchPages) {
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
-    // Initial DevTools check
-    detectDevTools();
-
     // Cleanup
     return () => {
-      window.removeEventListener('resize', detectDevTools);
       window.removeEventListener('contextmenu', preventRightClick);
       document.removeEventListener('keydown', preventDevToolsShortcuts);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
