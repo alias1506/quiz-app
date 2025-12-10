@@ -1,4 +1,4 @@
-const brevo = require('@getbrevo/brevo');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 /**
  * Send certificate email with PDF attachment using Brevo API
@@ -15,19 +15,16 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
   try {
     console.log(`📧 Sending certificate to: ${email}`);
 
-    // Debug: Check if API key is loaded
-    console.log(`🔑 API Key loaded: ${process.env.BREVO_API_KEY ? 'YES' : 'NO'}`);
-    console.log(`🔑 API Key starts with: ${process.env.BREVO_API_KEY?.substring(0, 20)}...`);
-
-    // Initialize Brevo API client with correct authentication
-    const apiInstance = new brevo.TransactionalEmailsApi();
-
-    // Set API key using the correct method for v2
-    const apiKey = apiInstance.authentications['apiKey'];
+    // Configure API client (matches Brevo example)
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications['api-key'];
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
+    // Initialize API instance
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
     // Prepare email
-    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
     sendSmtpEmail.sender = {
       name: "IIE Debate & Quiz Club",
@@ -116,13 +113,13 @@ async function sendEmail(options) {
   try {
     console.log(`📧 Sending email to: ${to}`);
 
-    const apiInstance = new brevo.TransactionalEmailsApi();
-
-    // Set API key using the correct method for v2
-    const apiKey = apiInstance.authentications['apiKey'];
+    // Configure API client
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications['api-key'];
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
-    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
     sendSmtpEmail.sender = {
       name: "IIE Debate & Quiz Club",
