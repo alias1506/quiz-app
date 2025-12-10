@@ -149,7 +149,6 @@ router.post("/check-attempts", async (req, res) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-
     let dailyAttempts = 0;
     let timeUntilReset = 0;
 
@@ -161,22 +160,33 @@ router.post("/check-attempts", async (req, res) => {
         lastAttemptDate.getDate()
       );
 
+      // Check if last attempt was TODAY
       if (lastAttemptDay.getTime() === today.getTime()) {
-
+        // Same day - use current attempt count
         dailyAttempts = user.dailyAttempts || 0;
 
-
+        // Calculate time until midnight
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         timeUntilReset = tomorrow.getTime() - now.getTime();
       } else {
-
+        // Different day - reset to 0
         dailyAttempts = 0;
+        console.log(`🔄 New day detected for ${normalizedEmail} - resetting attempts to 0`);
       }
+    } else {
+      // No previous attempts - brand new user
+      dailyAttempts = 0;
+      console.log(`👤 New user ${normalizedEmail} - starting with 0 attempts`);
     }
 
     const canAttempt = dailyAttempts < 3;
     const remainingAttempts = Math.max(0, 3 - dailyAttempts);
+
+    console.log(`📊 Check-attempts for ${normalizedEmail}:`);
+    console.log(`   - dailyAttempts: ${dailyAttempts}`);
+    console.log(`   - canAttempt: ${canAttempt}`);
+    console.log(`   - remainingAttempts: ${remainingAttempts}`);
 
     return res.status(200).json({
       canAttempt,
@@ -207,7 +217,6 @@ router.post("/record-attempt", async (req, res) => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     console.log(`🔍 Recording attempt for: ${normalizedEmail}`);
-
 
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },

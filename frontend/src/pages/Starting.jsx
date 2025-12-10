@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, User, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -10,6 +10,36 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Detect DevTools on mount and periodically
+  useEffect(() => {
+    const detectDevTools = () => {
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+
+      if (!(heightThreshold && widthThreshold) &&
+        ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || widthThreshold || heightThreshold)) {
+        // DevTools is open - redirect to 404
+        navigate('/404', { replace: true });
+      }
+    };
+
+    // Check on mount
+    detectDevTools();
+
+    // Check periodically
+    const interval = setInterval(detectDevTools, 1000);
+
+    // Check on resize
+    window.addEventListener('resize', detectDevTools);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', detectDevTools);
+    };
+  }, [navigate]);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -74,8 +104,8 @@ function App() {
     try {
       const API_BASE_URL =
         typeof import.meta !== "undefined" &&
-        import.meta.env &&
-        import.meta.env.MODE === "production"
+          import.meta.env &&
+          import.meta.env.MODE === "production"
           ? ""
           : "http://localhost:5000";
 
@@ -113,7 +143,7 @@ function App() {
         if (!attemptsData.canAttempt) {
           // User has exceeded daily limit
           let countdownInterval;
-          
+
           Swal.fire({
             title: "Daily Limit Reached!",
             html: `<p>You have used all 3 attempts for today (${attemptsData.currentAttempts}/3).</p>
@@ -125,22 +155,22 @@ function App() {
             didOpen: () => {
               const countdownElement = document.getElementById('countdown-timer');
               let timeLeft = attemptsData.timeUntilReset;
-              
+
               const updateCountdown = () => {
                 if (timeLeft <= 0) {
                   countdownElement.textContent = "0h 0m 0s";
                   clearInterval(countdownInterval);
                   return;
                 }
-                
+
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
+
                 countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
                 timeLeft -= 1000;
               };
-              
+
               updateCountdown();
               countdownInterval = setInterval(updateCountdown, 1000);
             },
@@ -158,7 +188,7 @@ function App() {
         const result = await Swal.fire({
           title: "Welcome Back!",
           html: `<p>You can attempt the quiz.</p>
-                 <p style="font-size: 1.2em; font-weight: bold;">Attempts: ${attemptsData.currentAttempts + 1}/3</p>`,
+                   <p style="font-size: 1.2em; font-weight: bold;">Attempts: ${attemptsData.currentAttempts + 1}/3</p>`,
           icon: "info",
           confirmButtonColor: "#3b82f6",
           confirmButtonText: "Start Quiz",
@@ -175,7 +205,7 @@ function App() {
         const result = await Swal.fire({
           title: "Welcome!",
           html: `<p>This is your first attempt.</p>
-                 <p style="font-size: 1.2em; font-weight: bold;">Attempts: 1/3</p>`,
+                   <p style="font-size: 1.2em; font-weight: bold;">Attempts: 1/3</p>`,
           icon: "success",
           confirmButtonColor: "#3b82f6",
           confirmButtonText: "Start Quiz",
@@ -195,9 +225,9 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          name: formData.name, 
-          email: formData.email 
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email
         }),
       });
 
@@ -206,7 +236,7 @@ function App() {
         if (recordResponse.status === 429) {
           // Somehow still hit the limit
           let countdownInterval;
-          
+
           Swal.fire({
             title: "Daily Limit Reached!",
             html: `<p>You have used all 3 attempts for today.</p>
@@ -218,22 +248,22 @@ function App() {
             didOpen: () => {
               const countdownElement = document.getElementById('countdown-timer-2');
               let timeLeft = errorData.timeUntilReset;
-              
+
               const updateCountdown = () => {
                 if (timeLeft <= 0) {
                   countdownElement.textContent = "0h 0m 0s";
                   clearInterval(countdownInterval);
                   return;
                 }
-                
+
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
+
                 countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
                 timeLeft -= 1000;
               };
-              
+
               updateCountdown();
               countdownInterval = setInterval(updateCountdown, 1000);
             },

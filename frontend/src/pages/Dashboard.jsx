@@ -131,7 +131,10 @@ function Dashboard() {
     if (currentQuestion > 0) setCurrentQuestion((q) => q - 1);
   };
 
-  const handleSubmit = () => setShowResults(true);
+  const handleSubmit = () => {
+    setShowResults(true);
+    sessionStorage.setItem('quizCompleted', 'true'); // Allow tab switching on results page
+  };
 
   const handleRestart = async () => {
     // Disabled while sending — guard here as well
@@ -151,7 +154,7 @@ function Dashboard() {
         return;
       }
 
-      // Check attempts before allowing retake
+      // Regular user - check attempts
       const attemptsResponse = await fetch(`${API_BASE_URL}/api/users/check-attempts`, {
         method: "POST",
         headers: {
@@ -210,10 +213,14 @@ function Dashboard() {
       }
 
       // User can attempt - show remaining attempts
+      const completedAttempts = attemptsData.currentAttempts;
+      const nextAttemptNumber = completedAttempts + 1;
+
       const result = await Swal.fire({
-        title: "Retake Quiz?",
-        html: `<p>You can attempt the quiz again.</p>
-               <p style="font-size: 1.2em; font-weight: bold;">Attempts: ${attemptsData.currentAttempts + 1}/3</p>`,
+        title: completedAttempts === 0 ? "Start Quiz?" : "Retake Quiz?",
+        html: `<p>${completedAttempts === 0 ? 'Ready to start your first quiz?' : 'You can attempt the quiz again.'}</p>
+               <p style="font-size: 1.2em; font-weight: bold; color: #3b82f6;">Attempt #${nextAttemptNumber} of 3</p>
+               <p style="font-size: 0.9em; color: #6b7280;">Completed: ${completedAttempts} | Remaining: ${3 - completedAttempts}</p>`,
         icon: "info",
         confirmButtonColor: "#3b82f6",
         confirmButtonText: "Start Quiz",
@@ -252,6 +259,7 @@ function Dashboard() {
       // Proceed with quiz restart
       setShowResults(false);
       setShowRules(true);
+      sessionStorage.removeItem('quizCompleted'); // Re-enable tab switching protection
     } catch (err) {
       console.error("Error checking attempts:", err);
       await Swal.fire({
@@ -643,7 +651,11 @@ function Dashboard() {
                   ) : (
                     <>
                       <Award className="h-4 w-4" />
-                      Generate Certificate
+                      {(() => {
+                        const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+                        const isAdmin = user.name?.toLowerCase() === 'admin' && user.email?.toLowerCase() === 'admin@gmail.com';
+                        return isAdmin ? 'Finish' : 'Generate Certificate';
+                      })()}
                     </>
                   )}
                 </button>
