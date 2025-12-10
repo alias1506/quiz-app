@@ -4,11 +4,11 @@ const User = require("../models/authModel");
 const { sendCertificateEmail } = require("../services/emailService");
 
 const sendCertificate = async (req, res) => {
-  console.log("🎫 Certificate endpoint hit!");
-  console.log("📥 Request body:", req.body);
-
   try {
     const { name, email, score, total, date, quizName } = req.body;
+
+    // Check if admin - skip email for admin
+    const isAdmin = name?.toLowerCase() === 'admin' && email?.toLowerCase() === 'admin@gmail.com';
 
     const frontendBaseURL = process.env.FRONTEND_URL || "http://localhost:5173";
 
@@ -201,21 +201,23 @@ const sendCertificate = async (req, res) => {
     const pdfBuffer = await pdfDone;
 
 
+    // Send email only if not admin
     let emailSent = false;
-    try {
-      await sendCertificateEmail(name, email, pdfBuffer);
-      emailSent = true;
-      console.log("✅ Certificate email sent successfully to:", email);
-    } catch (emailError) {
-      console.error("⚠️ Email failed (non-critical):", emailError.message);
-
+    if (!isAdmin) {
+      try {
+        await sendCertificateEmail(name, email, pdfBuffer);
+        emailSent = true;
+      } catch (emailError) {
+        console.error("⚠️ Email failed (non-critical):", emailError.message);
+      }
+    } else {
+      console.log("ℹ️ Skipping email for admin user");
     }
-
 
     res.json({
       message: emailSent
         ? "Certificate generated and sent to email"
-        : "Certificate generated successfully (email delivery unavailable)",
+        : "Certificate generated successfully",
       emailSent
     });
   } catch (err) {

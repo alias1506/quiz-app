@@ -288,7 +288,6 @@ function Dashboard() {
 
   // ✅ Generate PDF, save to DB, show popup, then redirect to /thank-you
   const handleGenerateCertificate = async () => {
-    console.log("🎯 Generate Certificate clicked!");
     const user = JSON.parse(sessionStorage.getItem("user")) || {};
     const score = calculateScore();
     const total = questions.length;
@@ -308,10 +307,6 @@ function Dashboard() {
       joinedOn: new Date().toISOString(),
       quizName: activeSet?.name || "Quiz",
     };
-
-    console.log("📦 Payload:", payload);
-    console.log("🌐 API Base URL:", API_BASE_URL);
-    console.log("🔗 Full URL:", `${API_BASE_URL}/api/certificate/send`);
 
     try {
       setSending(true); // show button loader and disable retake
@@ -708,8 +703,8 @@ function Dashboard() {
                   key={index}
                   onClick={() => handleOptionSelect(index)}
                   className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md active:scale-95 ${answers[currentQuestion] === index
-                      ? "border-blue-500 bg-blue-50 text-blue-900"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                    ? "border-blue-500 bg-blue-50 text-blue-900"
+                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                 >
                   <div className="flex items-center justify-between">
@@ -730,8 +725,8 @@ function Dashboard() {
               onClick={handlePrevious}
               disabled={isFirstQuestion}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${isFirstQuestion
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300 hover:shadow-md transform hover:scale-105 active:scale-95"
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300 hover:shadow-md transform hover:scale-105 active:scale-95"
                 }`}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -743,8 +738,8 @@ function Dashboard() {
                 onClick={handleSubmit}
                 disabled={!hasAnswered}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${hasAnswered
-                    ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
               >
                 <CheckCircle className="h-4 w-4" />
@@ -756,8 +751,8 @@ function Dashboard() {
                 onClick={handleNext}
                 disabled={!hasAnswered}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${hasAnswered
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white hover:shadow-lg transform hover:scale-105 active:scale-95"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
               >
                 <span className="hidden xs:inline">Next</span>

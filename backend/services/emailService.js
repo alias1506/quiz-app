@@ -77,8 +77,7 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
     // Send email
     const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    console.log("✅ Email sent successfully via Brevo");
-    console.log("📬 Message ID:", result.messageId);
+    console.log(`✅ Certificate email sent successfully to: ${email}`);
 
     return true;
   } catch (error) {
