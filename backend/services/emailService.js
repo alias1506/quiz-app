@@ -15,9 +15,12 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
   try {
     console.log(`📧 Sending certificate to: ${email}`);
 
-    // Initialize Brevo API client
+    // Initialize Brevo API client with correct authentication
     const apiInstance = new brevo.TransactionalEmailsApi();
-    apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+
+    // Set API key using the correct method for v2
+    const apiKey = apiInstance.authentications['apiKey'];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
 
     // Prepare email
     const sendSmtpEmail = new brevo.SendSmtpEmail();
@@ -110,7 +113,10 @@ async function sendEmail(options) {
     console.log(`📧 Sending email to: ${to}`);
 
     const apiInstance = new brevo.TransactionalEmailsApi();
-    apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+
+    // Set API key using the correct method for v2
+    const apiKey = apiInstance.authentications['apiKey'];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
 
     const sendSmtpEmail = new brevo.SendSmtpEmail();
 
