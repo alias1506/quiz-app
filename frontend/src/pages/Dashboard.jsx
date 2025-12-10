@@ -76,10 +76,21 @@ function Dashboard() {
   };
 
   const processQuestions = (questionsArray) =>
-    questionsArray.map((q) => ({
-      ...q,
-      correctAnswerIndex: q.options.findIndex((opt) => opt === q.correctAnswer),
-    }));
+    questionsArray.map((q) => {
+      // Shuffle the options array
+      const shuffledOptions = shuffleArray(q.options);
+
+      // Find the new index of the correct answer after shuffling
+      const correctAnswerIndex = shuffledOptions.findIndex(
+        (opt) => opt === q.correctAnswer
+      );
+
+      return {
+        ...q,
+        options: shuffledOptions,
+        correctAnswerIndex,
+      };
+    });
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -256,7 +267,8 @@ function Dashboard() {
         throw new Error(errorData.message || "Failed to record attempt");
       }
 
-      // Proceed with quiz restart
+      // Proceed with quiz restart - re-initialize to shuffle questions and options
+      await initializeQuiz();
       setShowResults(false);
       setShowRules(true);
       sessionStorage.removeItem('quizCompleted'); // Re-enable tab switching protection

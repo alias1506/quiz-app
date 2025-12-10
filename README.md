@@ -4,7 +4,8 @@ A full-stack quiz application with real-time scoring, certificate generation, em
 
 ## ✨ Features
 
-- **Multiple Choice Quizzes** - Dynamic question sets
+- **Multiple Choice Quizzes** - Dynamic question sets with randomized order
+- **Randomized Options** - Question options shuffle on every attempt
 - **Real-Time Scoring** - Instant feedback and results
 - **PDF Certificates** - Auto-generated and emailed
 - **Daily Attempt Limits** - 3 attempts per user per day
