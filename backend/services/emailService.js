@@ -15,6 +15,10 @@ async function sendCertificateEmail(name, email, pdfBuffer) {
   try {
     console.log(`📧 Sending certificate to: ${email}`);
 
+    // Debug: Check if API key is loaded
+    console.log(`🔑 API Key loaded: ${process.env.BREVO_API_KEY ? 'YES' : 'NO'}`);
+    console.log(`🔑 API Key starts with: ${process.env.BREVO_API_KEY?.substring(0, 20)}...`);
+
     // Initialize Brevo API client with correct authentication
     const apiInstance = new brevo.TransactionalEmailsApi();
 
