@@ -16,13 +16,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-  console.warn("⚠️  WARNING: Email credentials not set - certificate emails will not be sent!");
-  console.warn("⚠️  Set SMTP_USER and SMTP_PASS in environment variables.");
+if (!process.env.BREVO_API_KEY) {
+  console.warn("⚠️  WARNING: Brevo API key not set - certificate emails will not be sent!");
+  console.warn("⚠️  Set BREVO_API_KEY in environment variables.");
 } else {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = process.env.SMTP_PORT || 465;
-  console.log(`📧 Email configured: SMTP (${smtpHost}:${smtpPort})`);
+  console.log("📧 Email configured: Brevo API");
 }
 
 if (!process.env.MONGO_URI) {

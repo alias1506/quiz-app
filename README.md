@@ -4,13 +4,13 @@ A full-stack quiz application with certificate generation and email delivery.
 
 ## 📧 Email Service
 
-Uses **Gmail SMTP** (or any SMTP provider) for free and reliable email delivery.
+Uses **Brevo API** for reliable email delivery on Render free tier.
 
 ### Quick Setup
 
-1. **Enable 2-Step Verification** on `iiedebateandquizclub@gmail.com`
-2. **Generate App Password**: [Google App Passwords](https://myaccount.google.com/apppasswords)
-3. **Update backend/.env**: Set `SMTP_USER` and `SMTP_PASS`
+1. **Sign up at Brevo**: https://www.brevo.com/
+2. **Get API Key**: Settings → SMTP & API → Create new API key
+3. **Update backend/.env**: Set `BREVO_API_KEY`
 4. **Add to Render**: Settings → Environment Variables
 5. **Deploy**
 
@@ -31,13 +31,11 @@ Add these variables:
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `SMTP_HOST` | `smtp.gmail.com` | SMTP Server (default: smtp.gmail.com) |
-| `SMTP_PORT` | `465` | SMTP Port (default: 465) |
-| `SMTP_USER` | `email@gmail.com` | Your Email |
-| `SMTP_PASS` | `your-password` | App Password |
+| `BREVO_API_KEY` | `xkeysib-...` | Brevo API key from dashboard |
+| `SMTP_USER` | `email@gmail.com` | Your sender email address |
 | `MONGO_URI` | `mongodb+srv://...` | MongoDB connection string |
 | `FRONTEND_URL` | `https://quiz-app-wpgi.onrender.com` | Your Render app URL |
-| `GEMINI_API_KEY` | `AIzaSyAR_RmS2WPamTkivWXFEFYMqkuCTcDZIrk` | Gemini API key |
+| `GEMINI_API_KEY` | `AIzaSy...` | Gemini API key |
 | `JWT_SECRET` | `iiedebateandquizclub` | JWT secret |
 | `NODE_ENV` | `production` | Set to production |
 
@@ -50,22 +48,17 @@ The `backend/.env` file is already configured with placeholder values.
 1. Open `backend/.env`
 2. Update these lines:
    ```env
-    SMTP_HOST=smtp.gmail.com
-    SMTP_PORT=465
+    BREVO_API_KEY=your-brevo-api-key-here
     SMTP_USER=iiedebateandquizclub@gmail.com
-    SMTP_PASS=your-16-char-app-password
     ```
-3. Get App Password from [Google](https://myaccount.google.com/apppasswords)
+3. Get API Key from [Brevo Dashboard](https://app.brevo.com/)
 
 **Full .env configuration:**
 
 ```env
-# Gmail SMTP
-# Email SMTP (Gmail)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
+# Brevo Email API
+BREVO_API_KEY=your-brevo-api-key-here
 SMTP_USER=iiedebateandquizclub@gmail.com
-SMTP_PASS=your-app-password-here
 
 # MongoDB Database
 MONGO_URI=mongodb+srv://iiedebateandquizclub:iiedebateandquizclub@cluster.xvjap5l.mongodb.net/?appName=Cluster
