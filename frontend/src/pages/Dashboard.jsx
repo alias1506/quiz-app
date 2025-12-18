@@ -34,6 +34,25 @@ function Dashboard() {
       ? ""
       : "http://localhost:5000";
 
+  // Format text with superscript and subscript
+  const formatText = (text) => {
+    if (!text) return '';
+
+    let formatted = text;
+
+    // Handle superscript: ^2, ^3, etc. (for powers)
+    formatted = formatted.replace(/\^(\d+|\([^)]+\))/g, '<sup>$1</sup>');
+
+    // Handle subscript for chemical formulas: H2O, CO2, etc.
+    // Match capital letter followed by lowercase letter(s) followed by number(s)
+    formatted = formatted.replace(/([A-Z][a-z]?)(\d+)/g, '$1<sub>$2</sub>');
+
+    // Handle subscript in parentheses: (OH)2, (NH4)2, etc.
+    formatted = formatted.replace(/(\([A-Za-z0-9]+\))(\d+)/g, '$1<sub>$2</sub>');
+
+    return formatted;
+  };
+
   const fetchActiveSet = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/sets/active`);
@@ -266,7 +285,6 @@ function Dashboard() {
         }
         throw new Error(errorData.message || "Failed to record attempt");
       }
-
       // Proceed with quiz restart - re-initialize to shuffle questions and options
       await initializeQuiz();
       setShowResults(false);
@@ -475,10 +493,94 @@ function Dashboard() {
             ) : (
               <button
                 onClick={async () => {
-                  setFetchingQuestions(true);
-                  await initializeQuiz();
-                  setShowRules(false);
-                  setFetchingQuestions(false);
+                  try {
+                    setFetchingQuestions(true);
+
+                    // Get user info from session
+                    const user = JSON.parse(sessionStorage.getItem("user")) || {};
+                    const { name, email } = user;
+
+                    if (!name || !email) {
+                      await Swal.fire({
+                        title: "Session Error",
+                        text: "User information not found. Please login again.",
+                        icon: "error",
+                        confirmButtonColor: "#3b82f6",
+                      });
+                      setFetchingQuestions(false);
+                      return;
+                    }
+
+                    // Record the attempt before starting the quiz
+                    const recordResponse = await fetch(`${API_BASE_URL}/api/users/record-attempt`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({ name, email }),
+                    });
+
+                    if (!recordResponse.ok) {
+                      const errorData = await recordResponse.json();
+                      if (recordResponse.status === 429) {
+                        // Hit the daily limit
+                        let countdownInterval;
+
+                        await Swal.fire({
+                          title: "Daily Limit Reached!",
+                          html: `<p>You have used all 3 attempts for today.</p>
+                                 <p>Please try again after:</p>
+                                 <p id="countdown-timer-rules" style="font-size: 1.5em; font-weight: bold; color: #ef4444;">Calculating...</p>`,
+                          icon: "warning",
+                          confirmButtonColor: "#3b82f6",
+                          confirmButtonText: "OK",
+                          didOpen: () => {
+                            const countdownElement = document.getElementById('countdown-timer-rules');
+                            let timeLeft = errorData.timeUntilReset || 0;
+
+                            const updateCountdown = () => {
+                              if (timeLeft <= 0) {
+                                countdownElement.textContent = "0h 0m 0s";
+                                clearInterval(countdownInterval);
+                                return;
+                              }
+
+                              const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                              const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                              const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                              countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+                              timeLeft -= 1000;
+                            };
+
+                            updateCountdown();
+                            countdownInterval = setInterval(updateCountdown, 1000);
+                          },
+                          willClose: () => {
+                            if (countdownInterval) {
+                              clearInterval(countdownInterval);
+                            }
+                          }
+                        });
+                        setFetchingQuestions(false);
+                        return;
+                      }
+                      throw new Error(errorData.message || "Failed to record attempt");
+                    }
+                    // Attempt recorded successfully, now initialize the quiz
+                    await initializeQuiz();
+                    setShowRules(false);
+                  } catch (err) {
+                    console.error("Error starting quiz:", err);
+                    await Swal.fire({
+                      title: "Error",
+                      text: "Unable to start quiz. Please try again.",
+                      icon: "error",
+                      confirmButtonColor: "#3b82f6",
+                    });
+                  } finally {
+                    setFetchingQuestions(false);
+                  }
                 }}
                 className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg transform hover:scale-105 active:scale-95"
               >
@@ -578,7 +680,7 @@ function Dashboard() {
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h3 className="text-base font-semibold text-gray-900 flex-1">
                             <span className="text-blue-600">Q{i + 1}:</span>{" "}
-                            {q.question}
+                            <span dangerouslySetInnerHTML={{ __html: formatText(q.question) }} />
                           </h3>
                         </div>
                         <div className="space-y-2">
@@ -600,7 +702,7 @@ function Dashboard() {
                             return (
                               <div key={idx} className={optionClass}>
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="flex-1">{option}</span>
+                                  <span className="flex-1" dangerouslySetInnerHTML={{ __html: formatText(option) }} />
                                   <div className="flex gap-2 flex-shrink-0">
                                     {isCorrectAnswer && (
                                       <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
@@ -718,7 +820,7 @@ function Dashboard() {
               </span>
             </div>
             <h1 className="text-xl font-bold text-gray-900 mb-6 leading-tight">
-              {questions[currentQuestion]?.question}
+              <span dangerouslySetInnerHTML={{ __html: formatText(questions[currentQuestion]?.question) }} />
             </h1>
             {/* Options */}
             <div className="space-y-3">
@@ -732,9 +834,7 @@ function Dashboard() {
                     }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-medium leading-tight pr-2">
-                      {option}
-                    </span>
+                    <span className="text-base font-medium leading-tight pr-2" dangerouslySetInnerHTML={{ __html: formatText(option) }} />
                     {answers[currentQuestion] === index && (
                       <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
                     )}

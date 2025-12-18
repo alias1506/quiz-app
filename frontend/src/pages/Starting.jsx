@@ -219,69 +219,8 @@ function App() {
         }
       }
 
-      // Step 3: Record the attempt
-      const recordResponse = await fetch(`${API_BASE_URL}/api/users/record-attempt`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email
-        }),
-      });
-
-      if (!recordResponse.ok) {
-        const errorData = await recordResponse.json();
-        if (recordResponse.status === 429) {
-          // Somehow still hit the limit
-          let countdownInterval;
-
-          Swal.fire({
-            title: "Daily Limit Reached!",
-            html: `<p>You have used all 3 attempts for today.</p>
-                   <p>Please try again after:</p>
-                   <p id="countdown-timer-2" style="font-size: 1.5em; font-weight: bold; color: #ef4444;">Calculating...</p>`,
-            icon: "warning",
-            confirmButtonColor: "#3b82f6",
-            confirmButtonText: "OK",
-            didOpen: () => {
-              const countdownElement = document.getElementById('countdown-timer-2');
-              let timeLeft = errorData.timeUntilReset;
-
-              const updateCountdown = () => {
-                if (timeLeft <= 0) {
-                  countdownElement.textContent = "0h 0m 0s";
-                  clearInterval(countdownInterval);
-                  return;
-                }
-
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-                countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
-                timeLeft -= 1000;
-              };
-
-              updateCountdown();
-              countdownInterval = setInterval(updateCountdown, 1000);
-            },
-            willClose: () => {
-              if (countdownInterval) {
-                clearInterval(countdownInterval);
-              }
-            }
-          });
-          setIsLoading(false);
-          return;
-        }
-        throw new Error(errorData.message || "Failed to record attempt");
-      }
-
-      const recordData = await recordResponse.json();
-
-      // Store in session and navigate directly
+      // Store in session and navigate to dashboard
+      // Attempt will be recorded when user actually starts the quiz on Dashboard
       storeInSession(formData);
       navigate("/dashboard");
 

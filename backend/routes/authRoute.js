@@ -138,9 +138,11 @@ router.post("/check-attempts", async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Find the most recent user record for this email
     const user = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    });
+    }).sort({ lastAttemptDate: -1 });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -183,6 +185,11 @@ router.post("/check-attempts", async (req, res) => {
     const canAttempt = dailyAttempts < 3;
     const remainingAttempts = Math.max(0, 3 - dailyAttempts);
 
+    // Always calculate time until reset for the response
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const calculatedTimeUntilReset = tomorrow.getTime() - now.getTime();
+
     console.log(`📊 Check-attempts for ${normalizedEmail}:`);
     console.log(`   - dailyAttempts: ${dailyAttempts}`);
     console.log(`   - canAttempt: ${canAttempt}`);
@@ -193,7 +200,7 @@ router.post("/check-attempts", async (req, res) => {
       currentAttempts: dailyAttempts,
       remainingAttempts,
       maxAttempts: 3,
-      timeUntilReset: canAttempt ? 0 : timeUntilReset,
+      timeUntilReset: canAttempt ? 0 : calculatedTimeUntilReset,
       user: {
         name: user.name,
         email: user.email,
