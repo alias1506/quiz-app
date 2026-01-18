@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Clock
 } from "lucide-react";
+import { io } from "socket.io-client";
 import CustomSwal from "../utils/swalHelper";
 import { formatText } from "../utils/formatText";
 import { useSecurity } from "../contexts/SecurityContext";
@@ -40,6 +41,7 @@ function Dashboard() {
   const [roundTimings, setRoundTimings] = useState({}); // { roundName: secondsTaken }
   const [roundStartTime, setRoundStartTime] = useState(null); // timestamp when round actually started
   const [activeResultTab, setActiveResultTab] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   const hasInitialized = useRef(false);
 
@@ -288,6 +290,67 @@ function Dashboard() {
     }
     return () => clearInterval(interval);
   }, [timeLeft, showResults, showRoundInstructions, showRules]);
+
+  // Initialize WebSocket connection for real-time updates
+  useEffect(() => {
+    const adminSocketURL = import.meta.env.VITE_ADMIN_SOCKET_URL || 'http://localhost:8000';
+    const newSocket = io(adminSocketURL, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 10,
+      transports: ["websocket"],
+    });
+
+    newSocket.on('connect', () => {
+      console.log('✅ Dashboard connected to admin WebSocket');
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('❌ Dashboard disconnected from admin WebSocket');
+    });
+
+    newSocket.on('user:update', (data) => {
+      console.log('📥 Dashboard received user:update:', data);
+      
+      // Handle quiz updates
+      if (data.action === 'quiz-updated') {
+        console.log('🔄 Quiz updated, checking if reload needed...');
+        
+        // If quiz was unpublished, show alert and redirect
+        if (data.isPublished === false) {
+          CustomSwal.fire({
+            title: 'Quiz Unpublished',
+            text: 'This quiz has been unpublished by the administrator.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+          }).then(() => {
+            window.location.href = '/';
+          });
+        }
+      }
+      
+      // Handle quiz deletion
+      if (data.action === 'quiz-deleted') {
+        CustomSwal.fire({
+          title: 'Quiz Deleted',
+          text: 'This quiz has been deleted by the administrator.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = '/';
+        });
+      }
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+    };
+  }, []);
 
   // Quiz starts only when user clicks Start Quiz button
   // No auto-initialization
