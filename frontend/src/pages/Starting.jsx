@@ -473,18 +473,8 @@ function App() {
               </h1>
 
               <p className="text-2xl text-blue-100/70 max-w-2xl mx-auto leading-relaxed font-light">
-                We're currently preparing the next challenge for you. Stay tuned; this page will automatically sync the moment the admin starts the quiz.
+                We're currently preparing the next challenge for you. This page will automatically update when the admin publishes a quiz.
               </p>
-
-              <button
-                onClick={() => {
-                  setIsCheckingQuiz(true);
-                  fetchPublishedQuiz();
-                }}
-                className="mt-8 px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Check Again
-              </button>
             </div>
           </div>
         ) : (
