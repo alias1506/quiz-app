@@ -14,132 +14,35 @@ router.get("/", async (req, res) => {
 
 router.post("/check-email", async (req, res) => {
   try {
-    const { email } = req.body || {};
+    const { email } = req.body;
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-
-    const recentUser = await User.findOne({
-      email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    }).sort({ lastAttemptDate: -1 });
-
-    if (!recentUser) {
-      return res.status(200).json({
-        exists: false,
-        canAttempt: true,
-        currentAttempts: 0,
-        remainingAttempts: 3,
-      });
-    }
-
-
-    let dailyAttempts = 0;
-    if (recentUser.lastAttemptDate) {
-      const lastAttemptDate = new Date(recentUser.lastAttemptDate);
-      const lastAttemptDay = new Date(
-        lastAttemptDate.getFullYear(),
-        lastAttemptDate.getMonth(),
-        lastAttemptDate.getDate()
-      );
-
-      if (lastAttemptDay.getTime() === today.getTime()) {
-        dailyAttempts = recentUser.dailyAttempts || 0;
-      }
-    }
-
-    const canAttempt = dailyAttempts < 3;
-    const remainingAttempts = Math.max(0, 3 - dailyAttempts);
-
-    return res.status(200).json({
-      exists: true,
-      canAttempt,
-      currentAttempts: dailyAttempts,
-      remainingAttempts,
-      message: canAttempt ? "You can attempt the quiz" : "Daily limit reached",
+    const user = await User.findOne({
+      email: { $regex: `^${normalizedEmail}$`, $options: "i" }
     });
+
+    if (user) {
+      return res.json({ exists: true, user });
+    } else {
+      return res.json({ exists: false });
+    }
   } catch (err) {
     console.error("Check email error:", err);
-    return res.status(500).json({ message: "Server error checking email" });
-  }
-});
-
-router.post("/", async (req, res) => {
-  try {
-
-    let usersData = [];
-    if (Array.isArray(req.body)) {
-      usersData = req.body;
-    } else if (Array.isArray(req.body?.data)) {
-      usersData = req.body.data;
-    } else {
-      usersData = [req.body];
-    }
-
-
-    const validUsers = usersData.filter((u) => u && u.name && u.email);
-    if (validUsers.length === 0) {
-      return res.status(400).json({ message: "Name and email are required" });
-    }
-
-
-    const usersToInsert = validUsers.map((user) => ({
-      name: user.name,
-      email: String(user.email).toLowerCase().trim(),
-      score: user.score ?? null,
-      total: user.total ?? null,
-      quizName: user.quizName ?? null,
-      joinedOn: user.joinedOn ? new Date(user.joinedOn) : new Date(),
-    }));
-
-
-    const savedUsers = await User.insertMany(usersToInsert, { ordered: false });
-
-
-    return res.status(201).json({
-      success: true,
-      users: savedUsers,
-    });
-  } catch (err) {
-    console.error("Add users error:", err);
-
-
-    if (err.code === 11000 && err.keyPattern?.email) {
-      return res.status(409).json({ message: "Email already used" });
-    }
-
-    return res.status(500).json({ message: "Error creating user" });
-  }
-});
-
-router.delete("/:id", async (req, res) => {
-  try {
-    const deleted = await User.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    return res.json({ message: "User deleted", user: deleted });
-  } catch (err) {
-    console.error("Delete user error:", err);
-    return res.status(500).json({ message: "Error deleting user" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
 router.post("/check-attempts", async (req, res) => {
   try {
-    const { email } = req.body || {};
+    const { email, quizPart, hasParts } = req.body || {};
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-
-    // Find the most recent user record for this email
     const user = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
     }).sort({ lastAttemptDate: -1 });
@@ -151,55 +54,46 @@ router.post("/check-attempts", async (req, res) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    let dailyAttempts = 0;
-    let timeUntilReset = 0;
+    // Calculate attempts today from the attempts array
+    const attemptsToday = (user.attempts || []).filter(attempt => {
+      const attemptDate = new Date(attempt.timestamp);
+      const isToday = attemptDate.getFullYear() === today.getFullYear() &&
+        attemptDate.getMonth() === today.getMonth() &&
+        attemptDate.getDate() === today.getDate();
+      return isToday;
+    });
 
-    if (user.lastAttemptDate) {
-      const lastAttemptDate = new Date(user.lastAttemptDate);
-      const lastAttemptDay = new Date(
-        lastAttemptDate.getFullYear(),
-        lastAttemptDate.getMonth(),
-        lastAttemptDate.getDate()
-      );
+    // Create a map of attempts per part for today
+    const partAttemptsMap = {};
+    attemptsToday.forEach(a => {
+      const p = a.quizPart || "default";
+      partAttemptsMap[p] = (partAttemptsMap[p] || 0) + 1;
+    });
 
-      // Check if last attempt was TODAY
-      if (lastAttemptDay.getTime() === today.getTime()) {
-        // Same day - use current attempt count
-        dailyAttempts = user.dailyAttempts || 0;
-
-        // Calculate time until midnight
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        timeUntilReset = tomorrow.getTime() - now.getTime();
-      } else {
-        // Different day - reset to 0
-        dailyAttempts = 0;
-        console.log(`🔄 New day detected for ${normalizedEmail} - resetting attempts to 0`);
-      }
+    let currentAttempts = 0;
+    if (hasParts && quizPart) {
+      currentAttempts = partAttemptsMap[quizPart] || 0;
+    } else if (hasParts && !quizPart) {
+      // If we have parts but haven't selected one yet
+      currentAttempts = 0;
     } else {
-      // No previous attempts - brand new user
-      dailyAttempts = 0;
-      console.log(`👤 New user ${normalizedEmail} - starting with 0 attempts`);
+      // No parts - count total today
+      currentAttempts = attemptsToday.length;
     }
 
-    const canAttempt = dailyAttempts < 3;
-    const remainingAttempts = Math.max(0, 3 - dailyAttempts);
+    const canAttempt = currentAttempts < 3;
+    const remainingAttempts = Math.max(0, 3 - currentAttempts);
 
-    // Always calculate time until reset for the response
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const calculatedTimeUntilReset = tomorrow.getTime() - now.getTime();
 
-    console.log(`📊 Check-attempts for ${normalizedEmail}:`);
-    console.log(`   - dailyAttempts: ${dailyAttempts}`);
-    console.log(`   - canAttempt: ${canAttempt}`);
-    console.log(`   - remainingAttempts: ${remainingAttempts}`);
-
     return res.status(200).json({
       canAttempt,
-      currentAttempts: dailyAttempts,
+      currentAttempts,
       remainingAttempts,
       maxAttempts: 3,
+      partAttempts: partAttemptsMap,
       timeUntilReset: canAttempt ? 0 : calculatedTimeUntilReset,
       user: {
         name: user.name,
@@ -214,7 +108,7 @@ router.post("/check-attempts", async (req, res) => {
 
 router.post("/record-attempt", async (req, res) => {
   try {
-    const { name, email } = req.body || {};
+    const { name, email, quizName, quizPart } = req.body || {};
     if (!name || !email) {
       return res.status(400).json({ message: "Name and email are required" });
     }
@@ -223,143 +117,107 @@ router.post("/record-attempt", async (req, res) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    console.log(`🔍 Recording attempt for: ${normalizedEmail}`);
-
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
-    }).sort({ createdAt: -1, _id: -1 });
-
-    let dailyAttempts = 0;
-    let shouldCreateNew = false;
-    let attemptNumber = 1;
+    }).sort({ createdAt: -1 });
 
     if (recentUser) {
-
-      const totalEntries = await User.countDocuments({
-        email: { $regex: `^${normalizedEmail}$`, $options: "i" },
+      // Calculate daily attempts specifically for this part (if applicable) or total today
+      const attemptsToday = (recentUser.attempts || []).filter(a => {
+        const aDate = new Date(a.timestamp);
+        const isToday = aDate.getFullYear() === today.getFullYear() &&
+          aDate.getMonth() === today.getMonth() &&
+          aDate.getDate() === today.getDate();
+        if (!isToday) return false;
+        if (quizPart) return a.quizPart === quizPart;
+        return true;
       });
-      attemptNumber = recentUser.attemptNumber || totalEntries;
 
-      if (recentUser.lastAttemptDate) {
-        const lastAttemptDate = new Date(recentUser.lastAttemptDate);
-        const lastAttemptDay = new Date(
-          lastAttemptDate.getFullYear(),
-          lastAttemptDate.getMonth(),
-          lastAttemptDate.getDate()
-        );
+      const dailyAttemptsForThisContext = attemptsToday.length;
 
-        if (lastAttemptDay.getTime() === today.getTime()) {
+      if (dailyAttemptsForThisContext >= 3) {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const timeUntilReset = tomorrow.getTime() - now.getTime();
 
-          dailyAttempts = recentUser.dailyAttempts || 0;
-
-          console.log(`✏️ Same day attempt - Current: ${dailyAttempts}, Updating existing record ID: ${recentUser._id}`);
-
-
-          if (dailyAttempts >= 3) {
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const timeUntilReset = tomorrow.getTime() - now.getTime();
-
-            console.log(`🚫 Limit reached for ${normalizedEmail}`);
-
-            return res.status(429).json({
-              success: false,
-              message: "Daily attempt limit reached",
-              currentAttempts: dailyAttempts,
-              remainingAttempts: 0,
-              timeUntilReset,
-            });
-          }
-
-
-          dailyAttempts++;
-          recentUser.dailyAttempts = dailyAttempts;
-          recentUser.lastAttemptDate = now;
-          recentUser.name = name;
-          await recentUser.save();
-
-          console.log(`✅ Updated existing record - Attempts: ${dailyAttempts}/3`);
-
-          return res.status(200).json({
-            success: true,
-            message: "Attempt recorded successfully",
-            currentAttempts: dailyAttempts,
-            remainingAttempts: 3 - dailyAttempts,
-            user: {
-              name: recentUser.name,
-              email: recentUser.email,
-            },
-          });
-        } else {
-
-          console.log(`📅 Different day detected - Creating new entry`);
-          shouldCreateNew = true;
-          attemptNumber++;
-          dailyAttempts = 1;
-        }
-      } else {
-
-        shouldCreateNew = true;
-        attemptNumber++;
-        dailyAttempts = 1;
+        return res.status(429).json({
+          success: false,
+          message: quizPart ? `Daily limit reached for ${quizPart}` : "Daily attempt limit reached",
+          currentAttempts: dailyAttemptsForThisContext,
+          remainingAttempts: 0,
+          timeUntilReset,
+        });
       }
-    } else {
 
-      console.log(`🆕 First time user - Creating initial entry`);
-      shouldCreateNew = true;
-      attemptNumber = 1;
-      dailyAttempts = 1;
-    }
+      // Update existing user - only add to attempts array, don't overwrite top-level fields
+      recentUser.dailyAttempts = dailyAttemptsForThisContext + 1;
+      recentUser.lastAttemptDate = now;
+      recentUser.name = name;
 
+      // Only update top-level quizName/quizPart if this is the first attempt ever
+      if (!recentUser.quizName) recentUser.quizName = quizName;
+      if (!recentUser.quizPart) recentUser.quizPart = quizPart;
 
-    if (shouldCreateNew) {
-      console.log(`➕ Creating new entry - Attempt #${attemptNumber}, Daily: ${dailyAttempts}/3`);
-
-      const newUser = new User({
-        name: name,
-        email: normalizedEmail,
-        attemptNumber: attemptNumber,
-        joinedOn: now,
-        dailyAttempts: dailyAttempts,
-        lastAttemptDate: now,
+      if (!recentUser.attempts) recentUser.attempts = [];
+      recentUser.attempts.push({
+        attemptNumber: dailyAttemptsForThisContext + 1,
+        timestamp: now,
+        quizName: quizName || null,
+        quizPart: quizPart || null
       });
-      await newUser.save();
 
-      console.log(`✅ New entry created - ID: ${newUser._id}`);
+      await recentUser.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Attempt recorded successfully",
+        currentAttempts: dailyAttemptsForThisContext + 1,
+        remainingAttempts: 3 - (dailyAttemptsForThisContext + 1),
+        user: { name: recentUser.name, email: recentUser.email },
+      });
+    } else {
+      // New User
+      const newUser = new User({
+        name,
+        email: normalizedEmail,
+        attemptNumber: 1,
+        dailyAttempts: 1,
+        lastAttemptDate: now,
+        joinedOn: now,
+        quizName: quizName || null,
+        quizPart: quizPart || null,
+        attempts: [{
+          attemptNumber: 1,
+          timestamp: now,
+          quizName: quizName || null,
+          quizPart: quizPart || null
+        }]
+      });
+
+      await newUser.save();
 
       return res.status(201).json({
         success: true,
-        message: "Attempt recorded successfully",
-        currentAttempts: dailyAttempts,
-        remainingAttempts: 3 - dailyAttempts,
-        user: {
-          name: newUser.name,
-          email: newUser.email,
-        },
+        message: "Initial attempt recorded",
+        currentAttempts: 1,
+        remainingAttempts: 2,
+        user: { name: newUser.name, email: newUser.email },
       });
     }
   } catch (err) {
     console.error("Record attempt error:", err);
-    console.error("Error name:", err.name);
-    console.error("Error message:", err.message);
-    console.error("Error stack:", err.stack);
-    return res.status(500).json({
-      message: "Error recording attempt",
-      error: process.env.NODE_ENV === "development" ? err.message : undefined
-    });
+    return res.status(500).json({ message: "Server error recording attempt" });
   }
 });
 
 router.post("/update-score", async (req, res) => {
   try {
-    const { email, score, total, quizName } = req.body || {};
+    const { email, score, total, quizName, quizPart } = req.body || {};
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-
-
     const recentUser = await User.findOne({
       email: { $regex: `^${normalizedEmail}$`, $options: "i" },
     }).sort({ lastAttemptDate: -1 });
@@ -368,12 +226,26 @@ router.post("/update-score", async (req, res) => {
       return res.status(404).json({ message: "No attempt found for this email" });
     }
 
-
     recentUser.score = score;
     recentUser.total = total;
-    if (quizName) {
-      recentUser.quizName = quizName;
+    if (quizName) recentUser.quizName = quizName;
+    if (quizPart) recentUser.quizPart = quizPart;
+
+    if (recentUser.attempts && recentUser.attempts.length > 0) {
+      const latest = recentUser.attempts[recentUser.attempts.length - 1];
+      latest.score = score;
+      latest.total = total;
+
+      if (req.body.roundTimings) {
+        latest.roundTimings = req.body.roundTimings;
+        const totalRoundTime = req.body.roundTimings.reduce((acc, r) => acc + (r.timeTaken || 0), 0);
+        latest.timeTaken = totalRoundTime;
+
+        recentUser.timeTaken = totalRoundTime; // Update top-level for leaderboard
+        recentUser.roundTimings = req.body.roundTimings; // Update top-level round details
+      }
     }
+
     await recentUser.save();
 
     return res.status(200).json({
@@ -388,7 +260,7 @@ router.post("/update-score", async (req, res) => {
     });
   } catch (err) {
     console.error("Update score error:", err);
-    return res.status(500).json({ message: "Error updating score" });
+    return res.status(500).json({ message: "Server error updating score" });
   }
 });
 

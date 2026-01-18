@@ -66,11 +66,11 @@ function ThankYou() {
           <p className="text-sm text-gray-500">
             Have questions? Contact us at{" "}
             <a
-              href="mailto:iiedebateandquizclub@gmail.com"
+              href="mailto:iietechclub.mail@gmail.com"
               className="text-blue-600 hover:text-blue-700 transition-colors underline"
               title="Open your default email app"
             >
-              iiedebateandquizclub@gmail.com
+              iietechclub.mail@gmail.com
             </a>
             {/* If you want to avoid the Windows mail prompt, consider replacing the anchor
                 with a copy-to-clipboard button instead. */}
@@ -84,10 +84,10 @@ function ThankYou() {
 // Wrap ThankYou with security check
 export default function ThankYouWrapper() {
   const { showError } = useSecurity();
-  
+
   if (showError) {
     return <NotFound />;
   }
-  
+
   return <ThankYou />;
 }

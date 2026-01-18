@@ -10,10 +10,6 @@ front/node_modules/
 
 # Dependency locks (keep the one you use; ignore others if not needed)
 # If you want to commit lockfiles, remove these lines
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-bun.lockb
 
 # Logs
 logs

@@ -10,8 +10,30 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
       index: true,
     },
+    // Adding attempts array for compatibility with Admin panel expectations
+    attempts: [
+      {
+        attemptNumber: Number,
+        timestamp: Date,
+        score: Number,
+        total: Number,
+        quizName: String,
+        quizPart: String,
+        roundTimings: [
+          {
+            roundName: String,
+            timeTaken: Number, // in seconds
+          }
+        ],
+        timeTaken: {
+          type: Number,
+          default: 0
+        }
+      }
+    ],
     score: {
       type: Number,
       default: null,
@@ -20,7 +42,21 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    timeTaken: {
+      type: Number,
+      default: 0
+    },
+    roundTimings: [
+      {
+        roundName: String,
+        timeTaken: Number,
+      }
+    ],
     quizName: {
+      type: String,
+      default: null,
+    },
+    quizPart: {
       type: String,
       default: null,
     },
@@ -34,16 +70,16 @@ const userSchema = new mongoose.Schema(
     },
     dailyAttempts: {
       type: Number,
-      default: 1, // First attempt should be 1, not 0
+      default: 1,
     },
     lastAttemptDate: {
       type: Date,
-      default: Date.now, // Set to current time by default
+      default: Date.now,
     },
   },
-  { 
-    collection: "Quiz-Data", // bind to your specific collection
-    timestamps: true // Automatically add createdAt and updatedAt
+  {
+    collection: "Users", // Consistent with Admin app
+    timestamps: true
   }
 );
 

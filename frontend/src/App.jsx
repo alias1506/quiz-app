@@ -37,6 +37,7 @@ function App() {
               </ThankYouGuard>
             }
           />
+          <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </SecurityProvider>

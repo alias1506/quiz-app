@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import { useSecurity } from "../contexts/SecurityContext";
-import Swal from "sweetalert2";
+import CustomSwal from "../utils/swalHelper";
 import "./NotFound.css";
 
 function NotFound() {
@@ -12,14 +12,14 @@ function NotFound() {
   // Close all SweetAlert modals when 404 page loads
   useEffect(() => {
     // Close any open SweetAlert
-    if (Swal.isVisible()) {
-      Swal.close();
+    if (CustomSwal.isVisible()) {
+      CustomSwal.close();
     }
-    
+
     // Also check for any remaining SweetAlert containers and remove them
     const swalContainers = document.querySelectorAll('.swal2-container');
     swalContainers.forEach(container => container.remove());
-    
+
     // Remove any backdrop/overlay
     const swalBackdrops = document.querySelectorAll('.swal2-backdrop-show');
     swalBackdrops.forEach(backdrop => backdrop.remove());
@@ -32,10 +32,10 @@ function NotFound() {
     } catch (e) {
       console.error("Error clearing sessionStorage:", e);
     }
-    
+
     // Reset the error state
     setShowError(false);
-    
+
     // Navigate to starting page
     navigate("/", { replace: true });
   };
@@ -53,11 +53,11 @@ function NotFound() {
         {/* Content Box */}
         <div className="mt-4">
           <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-3">
-            Look like you're lost
+            Looks like you're lost
           </h3>
 
           <p className="text-gray-600 text-base sm:text-lg mb-6 sm:mb-8">
-            the page you are looking for not avaible!
+            The page you are looking for is not available!
           </p>
 
           <button

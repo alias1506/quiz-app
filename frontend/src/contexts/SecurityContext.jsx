@@ -77,8 +77,16 @@ export function SecurityProvider({ children }) {
       // Only trigger 404 if:
       // 1. On dashboard page
       // 2. Quiz is NOT completed (still answering questions)
-      // 3. User switched tabs
-      if (!quizCompleted && document.hidden) {
+      // 3. User switched tabs or changed window
+      if (!quizCompleted && (document.hidden || !document.hasFocus())) {
+        navigate('/404', { replace: true });
+      }
+    };
+
+    const handleBlur = () => {
+      if (window.location.pathname !== '/dashboard') return;
+      const quizCompleted = sessionStorage.getItem('quizCompleted') === 'true';
+      if (!quizCompleted) {
         navigate('/404', { replace: true });
       }
     };
@@ -93,6 +101,7 @@ export function SecurityProvider({ children }) {
     window.addEventListener('contextmenu', preventRightClick);
     document.addEventListener('keydown', preventDevToolsShortcuts);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
     window.addEventListener('resize', detectDevTools);
 
     // Cleanup
@@ -100,7 +109,8 @@ export function SecurityProvider({ children }) {
       clearInterval(devtoolsCheckInterval);
       window.removeEventListener('contextmenu', preventRightClick);
       document.removeEventListener('keydown', preventDevToolsShortcuts);
-      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
       window.removeEventListener('resize', detectDevTools);
     };
   }, [navigate]);
