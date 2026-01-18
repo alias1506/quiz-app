@@ -44,18 +44,4 @@ router.get("/rounds/:part", async (req, res) => {
     }
 });
 
-// Admin webhook to notify the student app of changes
-router.post("/notify-update", async (req, res) => {
-    try {
-        if (req.io) {
-            req.io.emit("quizUpdate");
-            console.log("📢 Quiz update broadcasted via WebSocket");
-        }
-        res.status(200).json({ success: true, message: "Notification broadcasted" });
-    } catch (err) {
-        console.error("Notify update error:", err);
-        res.status(500).json({ message: "Failed to broadcast update" });
-    }
-});
-
 module.exports = router;

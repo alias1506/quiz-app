@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Mail, User, Send, Clock, AlertCircle, Trophy, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CustomSwal from "../utils/swalHelper";
+import { io } from "socket.io-client";
 
 function App() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ function App() {
   const [isCheckingQuiz, setIsCheckingQuiz] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [partAttempts, setPartAttempts] = useState({}); // Track attempts per part
+  const [socket, setSocket] = useState(null);
   const navigate = useNavigate();
 
   const API_BASE_URL =
@@ -61,6 +63,64 @@ function App() {
   useEffect(() => {
     fetchPublishedQuiz();
   }, []);
+
+  // Initialize WebSocket connection for real-time updates
+  useEffect(() => {
+    const adminSocketURL = import.meta.env.VITE_ADMIN_SOCKET_URL || 'http://localhost:8000';
+    const newSocket = io(adminSocketURL, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+    });
+
+    newSocket.on('connect', () => {
+      console.log('✅ Connected to admin WebSocket server');
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('❌ Disconnected from admin WebSocket server');
+    });
+
+    // Listen for user updates (deletions)
+    newSocket.on('user:update', (data) => {
+      console.log('📢 User update received:', data);
+      
+      // Handle quiz updates/deletions
+      if (data.action === 'quiz-updated' || data.action === 'quiz-deleted') {
+        console.log('🔄 Quiz changed, refreshing...');
+        fetchPublishedQuiz();
+      }
+      
+      // Re-check attempts when a user is deleted
+      if (formData.email) {
+        checkPartAttempts(formData.email);
+      }
+    });
+
+    newSocket.on('user:deleted', (data) => {
+      console.log('🗑️ User deleted:', data);
+      // Re-check attempts when a user is deleted
+      if (formData.email && data.email === formData.email) {
+        checkPartAttempts(formData.email);
+      }
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+    };
+  }, []);
+
+  // Re-check attempts when email changes
+  useEffect(() => {
+    if (formData.email && validateEmail(formData.email)) {
+      checkPartAttempts(formData.email);
+    }
+  }, [formData.email]);
 
   // Detect DevTools on mount and periodically
   useEffect(() => {

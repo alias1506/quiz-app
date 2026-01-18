@@ -3,6 +3,7 @@ require("dotenv").config({ path: __dirname + "/.env" });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const socketClient = require("./services/socketClient");
 
 const authRoutes = require("./routes/authRoute");
 const questionRoutes = require("./routes/questionRoute");
@@ -70,6 +71,9 @@ if (process.env.NODE_ENV === "production") {
 
 app.listen(PORT, () => {
   console.log(`🚀 Student Server running on port ${PORT}`);
+  
+  // Initialize WebSocket connection to admin backend
+  socketClient.initializeSocket();
 });
 
 module.exports = app;

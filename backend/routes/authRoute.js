@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/authModel");
+const socketClient = require("../services/socketClient");
 
 router.get("/", async (req, res) => {
   try {
@@ -168,6 +169,16 @@ router.post("/record-attempt", async (req, res) => {
 
       await recentUser.save();
 
+      // Emit WebSocket event for attempt started
+      socketClient.emitAttemptStarted({
+        name: recentUser.name,
+        email: recentUser.email,
+        quizName: quizName || 'N/A',
+        quizPart: quizPart || 'N/A',
+        attemptNumber: dailyAttemptsForThisContext + 1,
+        timestamp: now,
+      });
+
       return res.status(200).json({
         success: true,
         message: "Attempt recorded successfully",
@@ -195,6 +206,16 @@ router.post("/record-attempt", async (req, res) => {
       });
 
       await newUser.save();
+
+      // Emit WebSocket event for new user joined
+      socketClient.emitUserJoined({
+        name: newUser.name,
+        email: newUser.email,
+        quizName: quizName || 'N/A',
+        quizPart: quizPart || 'N/A',
+        attemptNumber: 1,
+        timestamp: now,
+      });
 
       return res.status(201).json({
         success: true,
@@ -238,6 +259,17 @@ router.post("/update-score", async (req, res) => {
 
       if (req.body.roundTimings) {
         latest.roundTimings = req.body.roundTimings;
+    // Emit WebSocket event for score update
+    socketClient.emitScoreUpdated({
+      name: recentUser.name,
+      email: recentUser.email,
+      score,
+      total,
+      quizName: quizName || recentUser.quizName || 'N/A',
+      quizPart: quizPart || recentUser.quizPart || 'N/A',
+      timestamp: new Date(),
+    });
+
         const totalRoundTime = req.body.roundTimings.reduce((acc, r) => acc + (r.timeTaken || 0), 0);
         latest.timeTaken = totalRoundTime;
 
