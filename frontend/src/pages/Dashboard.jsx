@@ -740,9 +740,13 @@ function Dashboard() {
                           <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-md border border-green-100">
                             +{round.positivePoints} correct
                           </span>
-                          {round.negativePoints > 0 && (
+                          {round.negativePoints > 0 ? (
                             <span className="bg-red-50 text-red-700 px-2.5 py-1 rounded-md border border-red-100">
                               -{round.negativePoints} wrong
+                            </span>
+                          ) : (
+                            <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md border border-blue-100">
+                              No negative marks
                             </span>
                           )}
                         </div>

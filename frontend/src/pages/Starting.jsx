@@ -34,14 +34,14 @@ function App() {
           'Pragma': 'no-cache'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("📡 Published quiz response:", data);
-      
+
       if (data.published && data.quiz) {
         console.log("✅ Quiz is published:", data.quiz.name);
         setActiveQuiz(data.quiz);
@@ -60,13 +60,6 @@ function App() {
   // Fetch published quiz on mount
   useEffect(() => {
     fetchPublishedQuiz();
-    
-    // Also poll every 5 seconds to check for updates
-    const interval = setInterval(() => {
-      fetchPublishedQuiz();
-    }, 5000);
-    
-    return () => clearInterval(interval);
   }, []);
 
   // Detect DevTools on mount and periodically
