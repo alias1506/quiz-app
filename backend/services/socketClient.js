@@ -10,6 +10,8 @@ let socket = null;
 const initializeSocket = () => {
     // Admin backend WebSocket URL
     const adminSocketURL = process.env.ADMIN_SOCKET_URL || "http://localhost:8000";
+    
+    console.log(`🔌 Connecting to Admin WebSocket: ${adminSocketURL}`);
 
     socket = io(adminSocketURL, {
         reconnection: true,
@@ -20,7 +22,7 @@ const initializeSocket = () => {
     });
 
     socket.on("connect", () => {
-        console.log("✅ Connected to Admin WebSocket Server");
+        console.log(`✅ Connected to Admin WebSocket Server (${adminSocketURL})`);
     });
 
     socket.on("disconnect", () => {
@@ -28,7 +30,8 @@ const initializeSocket = () => {
     });
 
     socket.on("connect_error", (error) => {
-        console.error("❌ WebSocket connection error:", error.message);
+        console.error(`❌ WebSocket connection error: ${error.message}`);
+        console.error(`   Trying to connect to: ${adminSocketURL}`);
     });
 
     return socket;
