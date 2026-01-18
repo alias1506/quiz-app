@@ -34,6 +34,31 @@ const initializeSocket = () => {
         console.error(`   Trying to connect to: ${adminSocketURL}`);
     });
 
+    // Listen for events from admin server
+    socket.on("user:update", (data) => {
+        console.log("📥 Received: user:update", data);
+    });
+
+    socket.on("user:joined", (data) => {
+        console.log("📥 Received: user:joined", data);
+    });
+
+    socket.on("user:attemptStarted", (data) => {
+        console.log("📥 Received: user:attemptStarted", data);
+    });
+
+    socket.on("user:scoreUpdated", (data) => {
+        console.log("📥 Received: user:scoreUpdated", data);
+    });
+
+    socket.on("quiz:updated", (data) => {
+        console.log("📥 Received: quiz:updated", data);
+    });
+
+    socket.on("quiz:deleted", (data) => {
+        console.log("📥 Received: quiz:deleted", data);
+    });
+
     return socket;
 };
 
