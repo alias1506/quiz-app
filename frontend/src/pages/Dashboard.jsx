@@ -16,6 +16,7 @@ import {
   Clock
 } from "lucide-react";
 import CustomSwal from "../utils/swalHelper";
+import { formatText } from "../utils/formatText";
 import { useSecurity } from "../contexts/SecurityContext";
 import NotFound from "./NotFound";
 
@@ -49,71 +50,33 @@ function Dashboard() {
       ? ""
       : "http://localhost:3000";
 
-  // Format text with superscript and subscript
-  // Format text with superscript and subscript, and escapte HTML for code visibility
-  const formatText = (text) => {
-    if (!text) return '';
-
-    // 1. Escape HTML special chars to prevent browser from interpreting tags (Fix for invisible <br>, <h1>, etc.)
-    let formatted = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
-    // 2. Handle superscript: ^2, ^3, etc.
-    formatted = formatted.replace(/\^(\d+|\([^)]+\))/g, '<sup>$1</sup>');
-
-    // 3. Handle subscript for chemical formulas: H2O, CO2, etc.
-    formatted = formatted.replace(/([A-Z][a-z]?)(\d+)/g, '$1<sub>$2</sub>');
-
-    // 4. Handle subscript in parentheses: (OH)2, (NH4)2
-    formatted = formatted.replace(/(\([A-Za-z0-9]+\))(\d+)/g, '$1<sub>$2</sub>');
-
-    // 5. Preserve newlines
-    formatted = formatted.replace(/\n/g, '<br />');
-
-    return formatted;
-  };
-
   // Format question text specifically to highlight code blocks
   const formatQuestionText = (text) => {
     let formatted = formatText(text);
 
     // Heuristic: Check for C-like code patterns
-    // We look for common keywords that start code segments
     const codeKeywords = ["int", "char", "float", "double", "void", "for", "while", "if", "switch", "printf", "cout", "cin", "#include"];
-
-    // Regex finds a keyword that likely starts a code block (preceded by punctuation or whitespace)
     const regex = new RegExp(`(^|[\\s\\.\\?\\!] )(${codeKeywords.join("|")})\\s+.*[;\\{\\}]`, "i");
 
     const match = formatted.match(regex);
 
     if (match) {
-      // Find the starting index of the code (match[2] is the keyword)
-      // We search from match.index to find the actual keyword position
       const keyword = match[2];
       const relativeIndex = match[0].indexOf(keyword);
       const startIndex = match.index + relativeIndex;
 
       const plainText = formatted.substring(0, startIndex);
-      let codeText = formatted.substring(startIndex);
+      const codePart = formatted.substring(startIndex);
 
-      // Prettify code: add newlines for readability if it looks compressed
-      if (!codeText.includes("<br")) {
-        codeText = codeText
-          .replace(/;/g, ";<br/>")
-          .replace(/\{/g, "{<br/>&nbsp;&nbsp;")
-          .replace(/\}/g, "<br/>}")
-          // cleanup double breaks if any
-          .replace(/<br\/><br\/>/g, "<br/>");
-      }
-
-      return `${plainText}<div class="mt-4 p-4 bg-slate-900 text-green-400 rounded-md font-mono text-sm overflow-x-auto border-l-4 border-green-500 shadow-inner leading-relaxed">${codeText}</div>`;
+      return (
+        <div className="question-content">
+          <div dangerouslySetInnerHTML={{ __html: plainText }} />
+          <pre><code>{codePart.replace(/<br \/>/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}</code></pre>
+        </div>
+      );
     }
 
-    return formatted;
+    return <div className="question-content" dangerouslySetInnerHTML={{ __html: formatted }} />;
   };
 
   const shuffleArray = (array) => {
@@ -1164,9 +1127,9 @@ function Dashboard() {
                 Question {currentQuestion + 1}
               </span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-6 leading-tight question-content">
-              <span dangerouslySetInnerHTML={{ __html: formatQuestionText(questions[currentQuestion]?.question) }} />
-            </h1>
+            <div className="text-xl font-bold text-gray-900 mb-6 leading-tight">
+              {formatQuestionText(questions[currentQuestion]?.question)}
+            </div>
             {/* Options */}
             <div className="space-y-3">
               {questions[currentQuestion]?.options.map((option, index) => (
