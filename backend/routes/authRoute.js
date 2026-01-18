@@ -259,16 +259,6 @@ router.post("/update-score", async (req, res) => {
 
       if (req.body.roundTimings) {
         latest.roundTimings = req.body.roundTimings;
-    // Emit WebSocket event for score update
-    socketClient.emitScoreUpdated({
-      name: recentUser.name,
-      email: recentUser.email,
-      score,
-      total,
-      quizName: quizName || recentUser.quizName || 'N/A',
-      quizPart: quizPart || recentUser.quizPart || 'N/A',
-      timestamp: new Date(),
-    });
 
         const totalRoundTime = req.body.roundTimings.reduce((acc, r) => acc + (r.timeTaken || 0), 0);
         latest.timeTaken = totalRoundTime;
@@ -279,6 +269,17 @@ router.post("/update-score", async (req, res) => {
     }
 
     await recentUser.save();
+
+    // Emit WebSocket event for score update
+    socketClient.emitScoreUpdated({
+      name: recentUser.name,
+      email: recentUser.email,
+      score,
+      total,
+      quizName: quizName || recentUser.quizName || 'N/A',
+      quizPart: quizPart || recentUser.quizPart || 'N/A',
+      timestamp: new Date(),
+    });
 
     return res.status(200).json({
       success: true,

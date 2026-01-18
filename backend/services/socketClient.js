@@ -75,6 +75,8 @@ const emitUserJoined = (userData) => {
     if (sock && sock.connected) {
         sock.emit("user:joined", userData);
         console.log("📤 Emitted: user:joined", userData.email);
+    } else {
+        console.warn("⚠️  Socket not connected, cannot emit user:joined for", userData.email);
     }
 };
 
@@ -83,6 +85,8 @@ const emitAttemptStarted = (attemptData) => {
     if (sock && sock.connected) {
         sock.emit("user:attemptStarted", attemptData);
         console.log("📤 Emitted: user:attemptStarted", attemptData.email);
+    } else {
+        console.warn("⚠️  Socket not connected, cannot emit user:attemptStarted for", attemptData.email);
     }
 };
 
@@ -91,6 +95,8 @@ const emitScoreUpdated = (scoreData) => {
     if (sock && sock.connected) {
         sock.emit("user:scoreUpdated", scoreData);
         console.log("📤 Emitted: user:scoreUpdated", scoreData.email);
+    } else {
+        console.warn("⚠️  Socket not connected, cannot emit user:scoreUpdated for", scoreData.email);
     }
 };
 
