@@ -71,7 +71,8 @@ function App() {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      transports: ["websocket"], // Skip polling to avoid 'xhr poll error' on Render
     });
 
     newSocket.on('connect', () => {
@@ -85,13 +86,13 @@ function App() {
     // Listen for user updates (deletions)
     newSocket.on('user:update', (data) => {
       console.log('📢 User update received:', data);
-      
+
       // Handle quiz updates/deletions
       if (data.action === 'quiz-updated' || data.action === 'quiz-deleted') {
         console.log('🔄 Quiz changed, refreshing...');
         fetchPublishedQuiz();
       }
-      
+
       // Re-check attempts when a user is deleted
       if (formData.email) {
         checkPartAttempts(formData.email);
